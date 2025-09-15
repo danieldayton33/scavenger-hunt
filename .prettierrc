@@ -1,0 +1,19 @@
+{
+  "tabWidth": 2,
+  "endOfLine": "lf",
+  "useTabs": false,
+  "plugins": [
+    "prettier-plugin-tailwindcss"
+  ],
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 100,
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "importOrderParserPlugins": [
+    "typescript",
+    "decorators-legacy",
+    "jsx"
+  ]
+}

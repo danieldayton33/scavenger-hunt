@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: scavenger-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: scavenger_hunt
+      MARIADB_USER: appuser
+      MARIADB_PASSWORD: apppass
+      TZ: "America/New_York"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      # Optional: initialize with SQL files placed in ./docker/mariadb-init
+      - ./docker/mariadb-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -u$$MARIADB_USER -p$$MARIADB_PASSWORD || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Optional: lightweight DB UI
+  adminer:
+    image: adminer
+    container_name: scavenger-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+volumes:
+  mariadb_data:
