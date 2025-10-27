@@ -9,7 +9,7 @@ const HuntArchive = async () => {
     orderBy: [desc(scavengerHunts.createdAt)],
   });
   return (
-    <div className="p-8">
+    <div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Hunt Archive</h1>
         <Button>

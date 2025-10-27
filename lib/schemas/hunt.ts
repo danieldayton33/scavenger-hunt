@@ -1,6 +1,7 @@
 import { scavengerHunts } from '@/db/schema';
 import { InferSelectModel } from 'drizzle-orm';
 import { z } from 'zod';
+import { ScavengerHuntItem } from './huntItem';
 
 export const HuntSchema = z.object({
   title: z.string().min(3),
@@ -14,3 +15,7 @@ export const HuntSchema = z.object({
 export type HuntFormData = z.infer<typeof HuntSchema>;
 
 export type ScavengerHunt = InferSelectModel<typeof scavengerHunts>;
+
+export type ScavengerHuntWithItems = ScavengerHunt & {
+  items: ScavengerHuntItem[];
+};

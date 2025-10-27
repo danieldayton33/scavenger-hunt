@@ -1,12 +1,19 @@
 {
   "version": "7",
-  "dialect": "mysql",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1757276240989,
-      "tag": "0000_volatile_luke_cage",
+      "version": "7",
+      "when": 1758996675564,
+      "tag": "0000_dark_trauma",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1758997043469,
+      "tag": "0001_mature_makkari",
       "breakpoints": true
     }
   ]

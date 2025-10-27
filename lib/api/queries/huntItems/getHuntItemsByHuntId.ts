@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 
 const getHuntItemsByHuntId = async (id: number) => {
   return await db.query.huntItems.findMany({
-    where: eq(huntItems.id, id),
+    where: eq(huntItems.huntId, id),
   });
 };
 

@@ -7,8 +7,17 @@ export const HuntItemSchema = z.object({
   description: z.string().optional(),
   hint: z.string().optional(),
   imageUrl: z.string().optional(),
-  lat: z.number(),
-  lng: z.number(),
+  lat: z
+    .number()
+    .min(-90)
+    .max(90)
+    .transform((val) => val.toString()),
+  lng: z
+    .number()
+    .min(-180)
+    .max(180)
+    .transform((val) => val.toString()),
+  itemType: z.enum(['critter', 'art', 'other']),
 });
 
 export type HuntItemFormData = z.infer<typeof HuntItemSchema>;

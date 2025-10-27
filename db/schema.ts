@@ -1,41 +1,41 @@
 import {
-  mysqlTable,
+  pgTable,
   varchar,
   text,
-  int,
-  datetime,
-  index,
-  mysqlEnum,
-  boolean,
-  decimal,
+  integer,
   timestamp,
-  primaryKey,
+  boolean,
+  numeric,
+  index,
   uniqueIndex,
-} from 'drizzle-orm/mysql-core';
-
+  primaryKey,
+} from 'drizzle-orm/pg-core';
+import { pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-// Users table compatible with NextAuth Drizzle Adapter expectations (custom minimal version)
-export const users = mysqlTable('users', {
+// --- Enums ---
+export const roleEnum = pgEnum('role', ['admin', 'user']);
+export const statusEnum = pgEnum('status', ['pending', 'approved', 'rejected']);
+
+// --- Users ---
+export const users = pgTable('users', {
   id: varchar('id', { length: 255 })
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: varchar('name', { length: 255 }),
-  email: varchar('email', { length: 255 }).unique().notNull(),
-  emailVerified: timestamp('emailVerified', {
-    mode: 'date',
-    fsp: 3,
-  }),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  emailVerified: timestamp('emailVerified', { withTimezone: true }),
   image: varchar('image', { length: 1024 }),
-  role: mysqlEnum('role', ['admin', 'user']).default('user').notNull(),
-  createdAt: timestamp('createdAt').defaultNow().notNull(),
-  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+  role: roleEnum('role').notNull().default('user'),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 });
-// accounts (REMOVE the foreignKey({...}) in the third arg)
-export const accounts = mysqlTable(
+
+// --- Accounts ---
+export const accounts = pgTable(
   'accounts',
   {
-    id: int('id').autoincrement().primaryKey(),
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
     userId: varchar('userId', { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -44,37 +44,33 @@ export const accounts = mysqlTable(
     providerAccountId: varchar('providerAccountId', { length: 255 }).notNull(),
     refresh_token: text('refresh_token'),
     access_token: text('access_token'),
-    expires_at: int('expires_at'),
+    expires_at: integer('expires_at'),
     token_type: varchar('token_type', { length: 255 }),
     scope: varchar('scope', { length: 255 }),
     id_token: text('id_token'),
     session_state: varchar('session_state', { length: 255 }),
   },
-  (table) => [
-    index('accounts_user_idx').on(table.userId),
-    index('provider_providerAccountId_idx').on(table.provider, table.providerAccountId),
+  (t) => [
+    index('accounts_user_idx').on(t.userId),
+    index('provider_providerAccountId_idx').on(t.provider, t.providerAccountId),
   ]
 );
 
-// sessions (REMOVE the foreignKey({...}) in the third arg)
-export const sessions = mysqlTable(
+// --- Sessions ---
+export const sessions = pgTable(
   'sessions',
   {
-    sessionToken: varchar('sessionToken', { length: 255 }).primaryKey().notNull(),
+    sessionToken: varchar('sessionToken', { length: 255 }).primaryKey(),
     userId: varchar('userId', { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    expires: timestamp('expires', { mode: 'date' }).notNull(),
+    expires: timestamp('expires', { withTimezone: true }).notNull(),
   },
-  (table) => [
-    // optional: you can drop this since PK already indexes sessionToken
-    // index("session_token_idx").on(table.sessionToken),
-    index('sessions_user_idx').on(table.userId),
-  ]
+  (t) => [index('sessions_user_idx').on(t.userId)]
 );
 
-// authenticator (REMOVE the foreignKey({...}) in the third arg)
-export const authenticators = mysqlTable(
+// --- Authenticators ---
+export const authenticators = pgTable(
   'authenticator',
   {
     credentialID: varchar('credentialID', { length: 255 }).notNull(),
@@ -83,102 +79,90 @@ export const authenticators = mysqlTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     providerAccountId: varchar('providerAccountId', { length: 255 }).notNull(),
     credentialPublicKey: varchar('credentialPublicKey', { length: 255 }).notNull(),
-    counter: int('counter').notNull(),
+    counter: integer('counter').notNull(),
     credentialDeviceType: varchar('credentialDeviceType', { length: 255 }).notNull(),
     credentialBackedUp: boolean('credentialBackedUp').notNull(),
     transports: varchar('transports', { length: 255 }),
   },
-  (table) => [
-    primaryKey({ columns: [table.userId, table.credentialID], name: 'authenticator_pk' }),
-    uniqueIndex('authenticator_credentialID_uq').on(table.credentialID),
-    index('authenticator_userId_idx').on(table.userId),
+  (t) => [
+    primaryKey({ columns: [t.userId, t.credentialID], name: 'authenticator_pk' }),
+    uniqueIndex('authenticator_credentialID_uq').on(t.credentialID),
+    index('authenticator_userId_idx').on(t.userId),
   ]
 );
 
-export const verificationTokens = mysqlTable(
-  'verification_tokens',
-  {
-    identifier: varchar('identifier', { length: 255 }).notNull(),
-    token: varchar('token', { length: 255 }).notNull(),
-    expires: timestamp('expires', { mode: 'date' }).notNull(),
-  },
-  (table) => [
-    index('verification_tokens_token_idx').on(table.token),
-    index('verification_tokens_identifier_idx').on(table.identifier),
-    primaryKey({ columns: [table.identifier, table.token], name: 'verification_tokens_pk' }),
-  ]
-);
-
-// Core app tables
-export const scavengerHunts = mysqlTable(
+// --- Hunts ---
+export const scavengerHunts = pgTable(
   'scavenger_hunts',
   {
-    id: int('id').autoincrement().primaryKey(),
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
     title: varchar('title', { length: 255 }).notNull(),
-    slug: varchar('slug', { length: 255 }).unique().notNull(), // keep this...
-    // ...and delete the uniqueIndex below
+    slug: varchar('slug', { length: 255 }).notNull().unique(),
     description: text('description'),
-    startAt: datetime('startAt').notNull(),
-    endAt: datetime('endAt').notNull(),
+    startAt: timestamp('startAt', { withTimezone: true }).notNull(),
+    endAt: timestamp('endAt', { withTimezone: true }).notNull(),
     createdBy: varchar('createdBy', { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    isPublished: boolean('isPublished').default(false).notNull(),
-    createdAt: timestamp('createdAt').defaultNow().notNull(),
-    updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+    isPublished: boolean('isPublished').notNull().default(false),
+    createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    // REMOVE: uniqueIndex("hunts_slug_uq").on(table.slug),
-    index('hunts_by_window_idx').on(table.startAt, table.endAt),
-    index('hunts_by_creator_idx').on(table.createdBy),
+  (t) => [
+    index('hunts_by_window_idx').on(t.startAt, t.endAt),
+    index('hunts_by_creator_idx').on(t.createdBy),
   ]
 );
 
-export const huntItems = mysqlTable(
+// --- Items ---
+export const huntItems = pgTable(
   'hunt_items',
   {
-    id: int('id').autoincrement().primaryKey(),
-    huntId: int('huntId')
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
+    huntId: integer('huntId')
       .notNull()
       .references(() => scavengerHunts.id, { onDelete: 'cascade' }),
     title: varchar('title', { length: 255 }).notNull(),
     description: text('description'),
     hint: text('hint'),
     imageUrl: varchar('imageUrl', { length: 1024 }),
-    lat: decimal('lat', { precision: 10, scale: 7 }).notNull(),
-    lng: decimal('lng', { precision: 10, scale: 7 }).notNull(),
-    sortOrder: int('sortOrder').default(0).notNull(),
-    createdAt: timestamp('createdAt').defaultNow().notNull(),
+    itemType: text('itemType').notNull(),
+    lat: numeric('lat', { precision: 10, scale: 7 }).notNull(),
+    lng: numeric('lng', { precision: 10, scale: 7 }).notNull(),
+    sortOrder: integer('sortOrder').notNull().default(0),
+    createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('items_by_hunt_idx').on(table.huntId)]
+  (t) => [index('items_by_hunt_idx').on(t.huntId)]
 );
 
-export const huntParticipants = mysqlTable(
+// --- Participants ---
+export const huntParticipants = pgTable(
   'hunt_participants',
   {
-    id: int('id').autoincrement().primaryKey(),
-    huntId: int('huntId')
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
+    huntId: integer('huntId')
       .notNull()
       .references(() => scavengerHunts.id, { onDelete: 'cascade' }),
     userId: varchar('userId', { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    joinedAt: timestamp('joinedAt').defaultNow().notNull(),
+    joinedAt: timestamp('joinedAt', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    uniqueIndex('uniq_hunt_user').on(table.huntId, table.userId),
-    index('participants_by_user_idx').on(table.userId),
+  (t) => [
+    uniqueIndex('uniq_hunt_user').on(t.huntId, t.userId),
+    index('participants_by_user_idx').on(t.userId),
   ]
 );
 
-export const submissions = mysqlTable(
+// --- Submissions ---
+export const submissions = pgTable(
   'submissions',
   {
-    id: int('id').autoincrement().primaryKey(),
-    huntId: int('huntId')
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
+    huntId: integer('huntId')
       .notNull()
       .references(() => scavengerHunts.id, { onDelete: 'cascade' }),
-    itemId: int('itemId')
+    itemId: integer('itemId')
       .notNull()
       .references(() => huntItems.id, { onDelete: 'cascade' }),
     userId: varchar('userId', { length: 255 })
@@ -186,21 +170,36 @@ export const submissions = mysqlTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     imageUrl: varchar('imageUrl', { length: 1024 }),
     comment: text('comment'),
-    lat: decimal('lat', { precision: 10, scale: 7 }),
-    lng: decimal('lng', { precision: 10, scale: 7 }),
-    accuracyMeters: decimal('accuracyMeters', { precision: 8, scale: 2 }),
-    status: mysqlEnum('status', ['pending', 'approved', 'rejected']).default('approved').notNull(),
-    submittedAt: timestamp('submittedAt').defaultNow().notNull(),
+    lat: numeric('lat', { precision: 10, scale: 7 }),
+    lng: numeric('lng', { precision: 10, scale: 7 }),
+    accuracyMeters: numeric('accuracyMeters', { precision: 8, scale: 2 }),
+    status: statusEnum('status').notNull().default('approved'),
+    submittedAt: timestamp('submittedAt', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    index('sub_by_hunt_idx').on(table.huntId),
-    index('sub_by_user_idx').on(table.userId),
-    uniqueIndex('uniq_hunt_item_user').on(table.huntId, table.itemId, table.userId),
-    index('sub_hunt_submit_idx').on(table.huntId, table.submittedAt, table.id),
+  (t) => [
+    uniqueIndex('uniq_hunt_item_user').on(t.huntId, t.itemId, t.userId),
+    index('sub_by_hunt_idx').on(t.huntId),
+    index('sub_by_user_idx').on(t.userId),
+    index('sub_hunt_submit_idx').on(t.huntId, t.submittedAt, t.id),
   ]
 );
 
-// Relations (optional helpers)
+// --- Verification Tokens ---
+export const verificationTokens = pgTable(
+  'verification_tokens',
+  {
+    identifier: varchar('identifier', { length: 255 }).notNull(),
+    token: varchar('token', { length: 255 }).notNull().unique(),
+    expires: timestamp('expires', { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index('vt_identifier_idx').on(t.identifier),
+    index('vt_token_idx').on(t.token),
+    index('vt_expires_idx').on(t.expires),
+  ]
+);
+
+// --- Relations (so with: { ... } works) ---
 export const usersRelations = relations(users, ({ many }) => ({
   hunts: many(scavengerHunts),
   submissions: many(submissions),
@@ -212,24 +211,17 @@ export const huntsRelations = relations(scavengerHunts, ({ many }) => ({
   submissions: many(submissions),
 }));
 
-export const submissionsRelations = relations(submissions, ({ one }) => ({
-  hunt: one(scavengerHunts, {
-    fields: [submissions.huntId],
-    references: [scavengerHunts.id],
-  }),
-  item: one(huntItems, {
-    fields: [submissions.itemId],
-    references: [huntItems.id],
-  }),
-  user: one(users, {
-    fields: [submissions.userId],
-    references: [users.id],
-  }),
+export const huntItemsRelations = relations(huntItems, ({ one }) => ({
+  hunt: one(scavengerHunts, { fields: [huntItems.huntId], references: [scavengerHunts.id] }),
 }));
 
-export const huntItemsRelations = relations(huntItems, ({ one }) => ({
-  hunt: one(scavengerHunts, {
-    fields: [huntItems.huntId],
-    references: [scavengerHunts.id],
-  }),
+export const huntParticipantsRelations = relations(huntParticipants, ({ one }) => ({
+  hunt: one(scavengerHunts, { fields: [huntParticipants.huntId], references: [scavengerHunts.id] }),
+  user: one(users, { fields: [huntParticipants.userId], references: [users.id] }),
+}));
+
+export const submissionsRelations = relations(submissions, ({ one }) => ({
+  hunt: one(scavengerHunts, { fields: [submissions.huntId], references: [scavengerHunts.id] }),
+  item: one(huntItems, { fields: [submissions.itemId], references: [huntItems.id] }),
+  user: one(users, { fields: [submissions.userId], references: [users.id] }),
 }));

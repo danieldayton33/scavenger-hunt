@@ -12,16 +12,19 @@ export async function createHunt(newHunt: HuntFormData) {
 
   const data = HuntSchema.parse(newHunt);
   try {
-    const result = await db.insert(scavengerHunts).values({
-      ...data,
-      startAt: new Date(data.startAt),
-      endAt: new Date(data.endAt),
-      createdBy: session.user.id,
-    });
-    const { insertId } = result[0];
+    const result = await db
+      .insert(scavengerHunts)
+      .values({
+        ...data,
+        startAt: new Date(data.startAt),
+        endAt: new Date(data.endAt),
+        createdBy: session.user.id,
+      })
+      .returning();
+    const { id } = result[0];
     revalidatePath('/admin/hunts');
     return {
-      id: insertId,
+      id: id,
     };
   } catch (error) {
     console.error('Error creating hunt:', error);

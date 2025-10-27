@@ -26,7 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // user comes from DB when using the Drizzle adapter
       if (session.user) {
         session.user.id = user.id as unknown as string; // your users.id is varchar
-        session.user.role = (user as any).role ?? 'user';
+        session.user.role = (user as unknown as { role: 'admin' | 'user' }).role ?? 'user';
       }
       return session;
     },
