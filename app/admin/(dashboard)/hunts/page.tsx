@@ -26,9 +26,13 @@ const HuntArchive = async () => {
               {new Date(hunt.endAt).toLocaleDateString()}
             </p>
             <p
-              className={`text-sm font-medium ${hunt.isPublished ? 'text-green-600' : 'text-red-600'}`}
+              className={`text-sm font-medium ${hunt.status === 'published' ? 'text-green-600' : 'text-red-600'}`}
             >
-              {hunt.isPublished ? 'Published' : 'Unpublished'}
+              {hunt.status === 'published'
+                ? 'Published'
+                : hunt.status === 'completed'
+                  ? 'Completed'
+                  : 'Draft'}
             </p>
             <Button>
               <Link href={`/admin/hunts/${hunt.slug}`}>View Details</Link>

@@ -12,14 +12,14 @@ import {
 const LoginPage = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
-      <Card className="min-w-sm">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Welcome to Scavenger Hunt</CardTitle>
           <CardDescription>Please sign in to continue</CardDescription>
         </CardHeader>
-        <CardFooter>
+        <CardContent>
           <SignIn />
-        </CardFooter>
+        </CardContent>
       </Card>
     </div>
   );

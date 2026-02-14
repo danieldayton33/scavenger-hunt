@@ -16,6 +16,8 @@ import {
 import { Button } from './ui/button';
 import { updateHunt } from '@/lib/api/mutations/hunts/updateHunt';
 import { useRouter } from 'next/navigation';
+import { huntStatusEnum } from '@/db/schema';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -23,7 +25,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   startAt: z.string().min(1, { message: 'Start date is required.' }),
   endAt: z.string().min(1, { message: 'End date is required.' }),
-  isPublished: z.boolean().default(false),
+  status: z.enum(huntStatusEnum.enumValues),
 });
 
 export function HuntForm({
@@ -33,7 +35,7 @@ export function HuntForm({
     description: '',
     startAt: '',
     endAt: '',
-    isPublished: false,
+    status: 'draft',
   },
   isEdit = false,
 }: {
@@ -49,8 +51,8 @@ export function HuntForm({
     try {
       const mutation = isEdit ? updateHunt : createHunt;
       await mutation(values);
-      toast.success('Hunt created successfully!');
-      return router.push('/admin/hunts');
+      toast.success(isEdit ? 'Hunt updated successfully!' : 'Hunt created successfully!');
+      return router.push(isEdit ? `/admin/hunts/${values.slug}` : '/admin/hunts');
     } catch (error) {
       console.error('Error creating hunt:', error);
       toast.error('Failed to create hunt. Please try again.');
@@ -162,16 +164,20 @@ export function HuntForm({
 
         <FormField
           control={form.control}
-          name="isPublished"
+          name="status"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center space-y-0 space-x-3">
               <FormControl>
-                <input
-                  type="checkbox"
-                  className="focus:ring-primary h-4 w-4 rounded border border-gray-300 bg-white focus:ring-2 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                  checked={field.value}
-                  onChange={(e) => field.onChange(e.target.checked)}
-                />
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormControl>
               <div className="space-y-1">
                 <FormLabel className="text-base">Published</FormLabel>

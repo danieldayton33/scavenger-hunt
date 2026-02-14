@@ -16,6 +16,7 @@ import { relations } from 'drizzle-orm';
 // --- Enums ---
 export const roleEnum = pgEnum('role', ['admin', 'user']);
 export const statusEnum = pgEnum('status', ['pending', 'approved', 'rejected']);
+export const huntStatusEnum = pgEnum('hunt_status', ['draft', 'published', 'completed']);
 
 // --- Users ---
 export const users = pgTable('users', {
@@ -104,9 +105,9 @@ export const scavengerHunts = pgTable(
     createdBy: varchar('createdBy', { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    isPublished: boolean('isPublished').notNull().default(false),
     createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+    status: huntStatusEnum('status').notNull().default('draft'),
   },
   (t) => [
     index('hunts_by_window_idx').on(t.startAt, t.endAt),

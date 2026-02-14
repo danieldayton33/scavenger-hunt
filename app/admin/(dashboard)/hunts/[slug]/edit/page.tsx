@@ -21,7 +21,7 @@ const EditHuntPage = async ({ params }: { params: Promise<{ slug: string }> }) =
     description: hunt.description || '',
     startAt: toInputValue(hunt.startAt),
     endAt: toInputValue(hunt.endAt),
-    isPublished: hunt.isPublished,
+    status: hunt.status,
   };
 
   return (

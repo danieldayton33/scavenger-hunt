@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { scavengerHunts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { ScavengerHuntWithItems } from '@/lib/schemas/hunt';
+import { cacheTag } from 'next/cache';
 
 const getHuntBySlug = async (
   slug: string
@@ -12,11 +13,15 @@ const getHuntBySlug = async (
       error: string;
     }
 > => {
+  'use cache';
+  cacheTag(`hunt-${slug}`);
   try {
     const hunt = await db.query.scavengerHunts.findFirst({
       where: eq(scavengerHunts.slug, slug),
       with: {
         items: true,
+        participants: true,
+        submissions: true,
       },
     });
     if (!hunt) {

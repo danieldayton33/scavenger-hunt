@@ -2,7 +2,7 @@
 import { auth } from '@/auth/config';
 import { db } from '@/db';
 import { scavengerHunts } from '@/db/schema';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { HuntFormData, HuntSchema } from '@/lib/schemas/hunt';
 import { eq } from 'drizzle-orm';
 
@@ -21,6 +21,8 @@ export async function updateHunt(updatedHunt: HuntFormData) {
       })
       .where(eq(scavengerHunts.slug, data.slug));
     revalidatePath('/admin/hunts');
+    // revalidate the slug
+    revalidateTag(`hunt-${data.slug}`, 'max');
     return { id: data.slug };
   } catch (error) {
     console.error('Error updating hunt:', error);

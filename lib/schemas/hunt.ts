@@ -1,4 +1,4 @@
-import { scavengerHunts } from '@/db/schema';
+import { huntParticipants, huntStatusEnum, scavengerHunts, submissions } from '@/db/schema';
 import { InferSelectModel } from 'drizzle-orm';
 import { z } from 'zod';
 import { ScavengerHuntItem } from './huntItem';
@@ -9,13 +9,20 @@ export const HuntSchema = z.object({
   description: z.string().optional(),
   startAt: z.string(),
   endAt: z.string(),
-  isPublished: z.boolean().default(false),
+  status: z.enum(huntStatusEnum.enumValues),
 });
 
 export type HuntFormData = z.infer<typeof HuntSchema>;
 
 export type ScavengerHunt = InferSelectModel<typeof scavengerHunts>;
 
+export type HuntStatus = (typeof huntStatusEnum.enumValues)[number];
+
+export type HuntParticipant = InferSelectModel<typeof huntParticipants>;
+export type Submission = InferSelectModel<typeof submissions>;
+
 export type ScavengerHuntWithItems = ScavengerHunt & {
   items: ScavengerHuntItem[];
+  participants: HuntParticipant[];
+  submissions: Submission[];
 };
