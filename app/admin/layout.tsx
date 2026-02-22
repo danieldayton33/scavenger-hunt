@@ -1,8 +1,8 @@
 import { auth } from '@/auth/config';
 import { redirect } from 'next/navigation';
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 
-export default async function AdminLayout({
+async function AdminLayoutContent({
   children,
   modal,
 }: {
@@ -22,5 +22,19 @@ export default async function AdminLayout({
       {children}
       {modal}
     </>
+  );
+}
+
+export default function AdminLayout({
+  children,
+  modal,
+}: {
+  children: ReactNode;
+  modal: ReactNode;
+}) {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <AdminLayoutContent children={children} modal={modal} />
+    </Suspense>
   );
 }

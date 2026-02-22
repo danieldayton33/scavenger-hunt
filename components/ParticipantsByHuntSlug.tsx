@@ -2,7 +2,6 @@ import { getParticipantsByHuntIdWithUserInfo } from '@/lib/api/queries/participa
 
 const ParticipantsByHuntSlug = async ({ huntId }: { huntId: number }) => {
   const participants = await getParticipantsByHuntIdWithUserInfo(huntId);
-  console.log('participants', participants);
   return (
     <div>
       <h2 className="text-lg font-semibold">Participants</h2>

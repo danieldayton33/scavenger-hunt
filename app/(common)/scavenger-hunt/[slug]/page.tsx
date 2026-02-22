@@ -6,8 +6,9 @@ import { auth } from '@/auth/config';
 import getHuntBySlug from '@/lib/api/queries/hunts/getHuntBySlug';
 import { notFound } from 'next/navigation';
 import getSubmissionsForUserByHuntId from '@/lib/api/queries/submissions/getSubmissionsForUserByHuntId';
+import { Suspense } from 'react';
 
-const HuntViewPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
+async function HuntViewContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const session = await auth();
   const huntWithItems = await getHuntBySlug(slug);
@@ -20,11 +21,12 @@ const HuntViewPage = async ({ params }: { params: Promise<{ slug: string }> }) =
   const submissions = session?.user
     ? await getSubmissionsForUserByHuntId(huntWithItems.id, session.user.id)
     : [];
-  if ('error' in submissions) {
-    console.log(submissions.error);
+  if (Array.isArray(submissions) ? false : 'error' in submissions) {
+    console.log((submissions as { error: string }).error);
     notFound();
   }
 
+  const submissionList = Array.isArray(submissions) ? submissions : [];
   const userIsParticipant = participants.some(
     (participant) => participant.userId === session?.user?.id
   );
@@ -32,7 +34,7 @@ const HuntViewPage = async ({ params }: { params: Promise<{ slug: string }> }) =
   let leftToFind = items.length;
 
   const itemsWithSubmissionStatus = items.map((item) => {
-    const submission = submissions.find((submission) => submission.itemId === item.id);
+    const submission = submissionList.find((s) => s.itemId === item.id);
     const status: 'not_submitted' | 'submitted' | 'approved' | 'rejected' = submission
       ? submission.status === 'pending'
         ? 'submitted'
@@ -72,6 +74,12 @@ const HuntViewPage = async ({ params }: { params: Promise<{ slug: string }> }) =
       </div>
     </div>
   );
-};
+}
 
-export default HuntViewPage;
+export default function HuntViewPage({ params }: { params: Promise<{ slug: string }> }) {
+  return (
+    <Suspense fallback={<div className="p-4">Loading hunt...</div>}>
+      <HuntViewContent params={params} />
+    </Suspense>
+  );
+}

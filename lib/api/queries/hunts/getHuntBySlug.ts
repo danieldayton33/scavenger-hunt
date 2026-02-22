@@ -15,6 +15,7 @@ const getHuntBySlug = async (
 > => {
   'use cache';
   cacheTag(`hunt-${slug}`);
+  console.log('slug', slug);
   try {
     const hunt = await db.query.scavengerHunts.findFirst({
       where: eq(scavengerHunts.slug, slug),

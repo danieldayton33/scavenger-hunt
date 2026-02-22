@@ -17,6 +17,7 @@ import { Button } from './ui/button';
 import { ScavengerHunt } from '@/lib/schemas/hunt';
 import { HuntItemFormData } from '@/lib/schemas/huntItem';
 import { AddressPinPicker } from './AddressPicker';
+import { AdminImageUpload } from './AdminImageUpload';
 import { useParams, useRouter } from 'next/navigation';
 
 const HuntItemForm = ({
@@ -127,13 +128,24 @@ const HuntItemForm = ({
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>Image</FormLabel>
               <FormControl>
-                <input
-                  className="focus:border-primary focus:ring-primary w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  {...field}
-                />
+                <div className="space-y-2">
+                  <AdminImageUpload
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    uploadType="hunt-item"
+                    huntId={hunt.id}
+                    itemId={isEdit ? parseInt(params.itemId as string, 10) : undefined}
+                  />
+                  <input
+                    className="focus:border-primary focus:ring-primary mt-2 w-full rounded border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Or paste image URL"
+                    {...field}
+                  />
+                </div>
               </FormControl>
+              <FormDescription>Upload an image or paste a URL.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -158,9 +170,11 @@ const HuntItemForm = ({
             </FormItem>
           )}
         />
+        <div className="grid lg:grid-cols-2 gap-4">
         <AddressPinPicker
           initialPosition={lat && lng ? { lat: parseFloat(lat), lng: parseFloat(lng) } : undefined}
         />
+        <div>
         <FormField
           control={form.control}
           name="lat"
@@ -197,6 +211,8 @@ const HuntItemForm = ({
             </FormItem>
           )}
         />
+        </div>
+        </div>
         <Button type="submit">{isEdit ? 'Update Hunt Item' : 'Create Hunt Item'}</Button>
       </form>
     </Form>

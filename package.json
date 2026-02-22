@@ -10,7 +10,9 @@
     "db:gen": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "typegen:mobile": "tsx scripts/generate-mobile-dart-types.ts",
+    "check-fcm": "tsx scripts/check-fcm.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.10.0",
@@ -34,6 +36,7 @@
     "date-fns": "^4.1.0",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
+    "firebase-admin": "^13.6.1",
     "i": "^0.3.7",
     "jose": "^6.1.0",
     "lucide-react": "^0.542.0",

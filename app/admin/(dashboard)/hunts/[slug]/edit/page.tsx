@@ -19,6 +19,7 @@ const EditHuntPage = async ({ params }: { params: Promise<{ slug: string }> }) =
     title: hunt.title,
     slug: hunt.slug,
     description: hunt.description || '',
+    imageUrl: hunt.imageUrl ?? '',
     startAt: toInputValue(hunt.startAt),
     endAt: toInputValue(hunt.endAt),
     status: hunt.status,

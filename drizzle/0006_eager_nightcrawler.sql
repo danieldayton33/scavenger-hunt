@@ -1,0 +1,1 @@
+ALTER TABLE "submissions" ALTER COLUMN "imageUrl" SET DATA TYPE text;

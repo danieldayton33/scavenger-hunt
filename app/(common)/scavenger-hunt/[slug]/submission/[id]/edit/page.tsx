@@ -10,12 +10,9 @@ import { Button } from '@/components/ui/button';
 import { JoinHuntButton } from '@/components/JoinHuntButton';
 import Link from 'next/link';
 import { createRandomizedCircle } from '@/lib/utils/mapUtils';
+import { Suspense } from 'react';
 
-export default async function EditSubmissionPage({
-  params,
-}: {
-  params: Promise<{ slug: string; id: string }>;
-}) {
+async function EditSubmissionContent({ params }: { params: Promise<{ slug: string; id: string }> }) {
   const session = await auth();
   if (!session?.user) {
     redirect('/login');
@@ -104,6 +101,14 @@ export default async function EditSubmissionPage({
         submissionId={submissionId}
       />
     </div>
+  );
+}
+
+export default function EditSubmissionPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <EditSubmissionContent params={params} />
+    </Suspense>
   );
 }
 

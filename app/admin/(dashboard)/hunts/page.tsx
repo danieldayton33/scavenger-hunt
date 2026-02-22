@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { HuntCard } from '@/components/HuntCard';
 import { db } from '@/db';
 import { scavengerHunts } from '@/db/schema';
 import { desc } from 'drizzle-orm';
@@ -10,36 +11,27 @@ const HuntArchive = async () => {
   });
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Hunt Archive</h1>
-        <Button>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">All Hunts</h1>
+        <Button asChild>
           <Link href="/admin/hunts/new">Create New Hunt</Link>
         </Button>
       </div>
-      <ul className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {hunts.map((hunt) => (
-          <li key={hunt.id} className="rounded-lg border p-4 shadow-sm">
-            <h2 className="text-xl font-semibold">{hunt.title}</h2>
-            <p className="text-gray-600">{hunt.description}</p>
-            <p className="text-sm text-gray-500">
-              Start: {new Date(hunt.startAt).toLocaleDateString()} | End:{' '}
-              {new Date(hunt.endAt).toLocaleDateString()}
-            </p>
-            <p
-              className={`text-sm font-medium ${hunt.status === 'published' ? 'text-green-600' : 'text-red-600'}`}
-            >
-              {hunt.status === 'published'
-                ? 'Published'
-                : hunt.status === 'completed'
-                  ? 'Completed'
-                  : 'Draft'}
-            </p>
-            <Button>
-              <Link href={`/admin/hunts/${hunt.slug}`}>View Details</Link>
-            </Button>
-          </li>
+          <HuntCard
+            key={hunt.id}
+            id={hunt.id}
+            title={hunt.title}
+            slug={hunt.slug}
+            description={hunt.description}
+            imageUrl={hunt.imageUrl}
+            startAt={hunt.startAt}
+            endAt={hunt.endAt}
+            status={hunt.status}
+          />
         ))}
-      </ul>
+      </div>
     </div>
   );
 };

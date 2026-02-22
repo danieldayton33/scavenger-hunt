@@ -1,13 +1,12 @@
-import { Button } from '@/components/ui/button';
 import { getHuntsByStatusWithParticipation } from '@/lib/api/queries/hunts/getHuntsByStatusWithParticipation';
-import Link from 'next/link';
 import { auth } from '@/auth/config';
 import HuntCardWithSignUp from '@/components/HuntCardWithSignUp';
+import { Suspense } from 'react';
 
-export default async function Home() {
+async function HomeContent() {
   const session = await auth();
   const hunts = await getHuntsByStatusWithParticipation({
-    status: 'published',
+    statuses: ['published'],
     userId: session?.user.id,
   });
   return (
@@ -19,5 +18,13 @@ export default async function Home() {
         ))}
       </ul>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

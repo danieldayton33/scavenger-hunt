@@ -25,7 +25,7 @@ const createHuntItem = async ({
       })
       .returning();
     const { id } = result[0];
-    revalidateTag(`hunt-${hunt.slug}`);
+    revalidateTag(`hunt-${hunt.slug}`, 'max');
     return {
       id,
     };

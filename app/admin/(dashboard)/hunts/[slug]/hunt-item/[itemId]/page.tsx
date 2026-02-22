@@ -20,7 +20,7 @@ const HuntItemEditPage = async ({
     console.log(item.error);
     notFound();
   }
-  console.log(item, 'item');
+
 
   const formValues: HuntItemFormData = {
     title: item.title,
@@ -31,7 +31,6 @@ const HuntItemEditPage = async ({
     lng: item.lng.toString() || '0',
     itemType: (item.itemType as 'critter' | 'art' | 'other') || 'critter',
   };
-  console.log(formValues, 'formValues');
 
   return (
     <div className="gap4 flex flex-col">

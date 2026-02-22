@@ -32,7 +32,7 @@ export const updatedHuntItem = async ({
       })
       .where(eq(huntItems.id, huntItemId));
 
-    revalidateTag(`hunt-${hunt.slug}`);
+    revalidateTag(`hunt-${hunt.slug}`, 'max');
     return {
       id: huntItemId,
     };

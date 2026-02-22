@@ -51,7 +51,7 @@ export async function updateUserProfile(data: {
   } catch (error) {
     console.error('Error updating user profile:', error);
     if (error instanceof z.ZodError) {
-      throw new Error(error.errors[0].message);
+      throw new Error(error.issues[0].message);
     }
     throw new Error('Failed to update user profile');
   }

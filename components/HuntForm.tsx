@@ -18,11 +18,13 @@ import { updateHunt } from '@/lib/api/mutations/hunts/updateHunt';
 import { useRouter } from 'next/navigation';
 import { huntStatusEnum } from '@/db/schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { AdminImageUpload } from './AdminImageUpload';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
   slug: z.string().min(3, { message: 'Slug must be at least 3 characters.' }),
   description: z.string().optional(),
+  imageUrl: z.string().optional(),
   startAt: z.string().min(1, { message: 'Start date is required.' }),
   endAt: z.string().min(1, { message: 'End date is required.' }),
   status: z.enum(huntStatusEnum.enumValues),
@@ -33,6 +35,7 @@ export function HuntForm({
     title: '',
     slug: '',
     description: '',
+    imageUrl: '',
     startAt: '',
     endAt: '',
     status: 'draft',
@@ -47,6 +50,7 @@ export function HuntForm({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+  const slug = form.watch('slug');
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const mutation = isEdit ? updateHunt : createHunt;
@@ -117,6 +121,33 @@ export function HuntForm({
                 />
               </FormControl>
               <FormDescription>A brief description of the scavenger hunt.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Image</FormLabel>
+              <FormControl>
+                <div className="space-y-2">
+                  <AdminImageUpload
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    uploadType="hunt"
+                    slug={slug || undefined}
+                  />
+                  <input
+                    className="focus:border-primary focus:ring-primary mt-2 w-full rounded border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Or paste image URL"
+                    {...field}
+                  />
+                </div>
+              </FormControl>
+              <FormDescription>Upload an image or paste a URL for the hunt.</FormDescription>
               <FormMessage />
             </FormItem>
           )}

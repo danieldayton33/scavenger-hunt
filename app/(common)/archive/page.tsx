@@ -6,8 +6,9 @@ import { eq, desc } from 'drizzle-orm';
 import Link from 'next/link';
 import { auth } from '@/auth/config';
 import { isUserParticipant } from '@/lib/api/queries/participants/getParticipantByHuntAndUser';
+import { Suspense } from 'react';
 
-export default async function ArchivePage() {
+async function ArchiveContent() {
   const session = await auth();
   const hunts = await db.query.scavengerHunts.findMany({
     where: eq(scavengerHunts.status, 'completed'),
@@ -50,5 +51,13 @@ export default async function ArchivePage() {
         </ul>
       )}
     </div>
+  );
+}
+
+export default function ArchivePage() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <ArchiveContent />
+    </Suspense>
   );
 }

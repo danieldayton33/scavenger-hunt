@@ -3,8 +3,9 @@ import { redirect } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ProfileView from '@/components/ProfileView';
+import { Suspense } from 'react';
 
-export default async function ProfilePage() {
+async function ProfileContent() {
   const session = await auth();
 
   if (!session?.user) {
@@ -50,5 +51,13 @@ export default async function ProfilePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <ProfileContent />
+    </Suspense>
   );
 }

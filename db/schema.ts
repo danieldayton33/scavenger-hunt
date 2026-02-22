@@ -19,18 +19,23 @@ export const statusEnum = pgEnum('status', ['pending', 'approved', 'rejected']);
 export const huntStatusEnum = pgEnum('hunt_status', ['draft', 'published', 'completed']);
 
 // --- Users ---
-export const users = pgTable('users', {
-  id: varchar('id', { length: 255 })
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: varchar('name', { length: 255 }),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  emailVerified: timestamp('emailVerified', { withTimezone: true }),
-  image: varchar('image', { length: 1024 }),
-  role: roleEnum('role').notNull().default('user'),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
-});
+export const users = pgTable(
+  'users',
+  {
+    id: varchar('id', { length: 255 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    name: varchar('name', { length: 255 }),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    emailVerified: timestamp('emailVerified', { withTimezone: true }),
+    image: varchar('image', { length: 1024 }),
+    role: roleEnum('role').notNull().default('user'),
+    firebaseUid: varchar('firebaseUid', { length: 255 }).unique(),
+    createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('users_firebase_uid_idx').on(t.firebaseUid)]
+);
 
 // --- Accounts ---
 export const accounts = pgTable(
@@ -43,6 +48,7 @@ export const accounts = pgTable(
     type: varchar('type', { length: 255 }).notNull(),
     provider: varchar('provider', { length: 255 }).notNull(),
     providerAccountId: varchar('providerAccountId', { length: 255 }).notNull(),
+    password: text('password'),
     refresh_token: text('refresh_token'),
     access_token: text('access_token'),
     expires_at: integer('expires_at'),
@@ -100,6 +106,7 @@ export const scavengerHunts = pgTable(
     title: varchar('title', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }).notNull().unique(),
     description: text('description'),
+    imageUrl: varchar('imageUrl', { length: 1024 }),
     startAt: timestamp('startAt', { withTimezone: true }).notNull(),
     endAt: timestamp('endAt', { withTimezone: true }).notNull(),
     createdBy: varchar('createdBy', { length: 255 })
@@ -169,12 +176,12 @@ export const submissions = pgTable(
     userId: varchar('userId', { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    imageUrl: varchar('imageUrl', { length: 1024 }),
+    imageUrl: text('imageUrl'),
     comment: text('comment'),
     lat: numeric('lat', { precision: 10, scale: 7 }),
     lng: numeric('lng', { precision: 10, scale: 7 }),
     accuracyMeters: numeric('accuracyMeters', { precision: 8, scale: 2 }),
-    status: statusEnum('status').notNull().default('approved'),
+    status: statusEnum('status').notNull().default('pending'),
     submittedAt: timestamp('submittedAt', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -200,10 +207,35 @@ export const verificationTokens = pgTable(
   ]
 );
 
+// --- User devices (push notification tokens) ---
+export const userDevices = pgTable(
+  'user_devices',
+  {
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
+    userId: varchar('userId', { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    platform: varchar('platform', { length: 32 }).notNull(), // 'ios' | 'android'
+    pushToken: text('pushToken').notNull(),
+    isActive: boolean('isActive').notNull().default(true),
+    createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp('lastSeenAt', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('user_devices_user_platform').on(t.userId, t.platform),
+    index('user_devices_user_idx').on(t.userId),
+  ]
+);
+
 // --- Relations (so with: { ... } works) ---
 export const usersRelations = relations(users, ({ many }) => ({
   hunts: many(scavengerHunts),
   submissions: many(submissions),
+  devices: many(userDevices),
+}));
+
+export const userDevicesRelations = relations(userDevices, ({ one }) => ({
+  user: one(users, { fields: [userDevices.userId], references: [users.id] }),
 }));
 
 export const huntsRelations = relations(scavengerHunts, ({ many }) => ({

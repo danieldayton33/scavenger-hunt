@@ -7,6 +7,7 @@ export const HuntSchema = z.object({
   title: z.string().min(3),
   slug: z.string().min(3),
   description: z.string().optional(),
+  imageUrl: z.string().optional(),
   startAt: z.string(),
   endAt: z.string(),
   status: z.enum(huntStatusEnum.enumValues),

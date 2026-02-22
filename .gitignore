@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Firebase service account key (use FIREBASE_SERVICE_ACCOUNT_PATH in .env)
+service-account.json
+
 # vercel
 .vercel
 

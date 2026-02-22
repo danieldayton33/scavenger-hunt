@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { JoinHuntButton } from '@/components/JoinHuntButton';
 import Link from 'next/link';
 import { createRandomizedCircle } from '@/lib/utils/mapUtils';
+import { Suspense } from 'react';
 
-export default async function CreateSubmissionPage({
+async function CreateSubmissionContent({
   params,
   searchParams,
 }: {
@@ -84,5 +85,16 @@ export default async function CreateSubmissionPage({
       </div>
       <SubmissionForm hunt={hunt} item={item} randomizedCircle={randomizedCircle} />
     </div>
+  );
+}
+
+export default function CreateSubmissionPage(props: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ itemId?: string }>;
+}) {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <CreateSubmissionContent params={props.params} searchParams={props.searchParams} />
+    </Suspense>
   );
 }

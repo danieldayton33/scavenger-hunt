@@ -53,7 +53,6 @@ function formatDate(date: Date | null): string {
 
 export default async function Scoreboard({ huntId }: ScoreboardProps) {
   const scoreboard = await getHuntScoreboardNoDuplicateItems(huntId);
-  console.log('scoreboard', scoreboard);
 
   if (scoreboard.length === 0) {
     return (

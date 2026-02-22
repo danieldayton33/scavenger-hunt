@@ -2,23 +2,25 @@ import DeleteItemButton from '@/components/DeleteItemButton';
 import HuntMap from '@/components/HuntMap';
 import ParticipantsByHuntSlug from '@/components/ParticipantsByHuntSlug';
 import Scoreboard from '@/components/Scoreboard';
+import SubmissionsTable from '@/components/SubmissionsTable';
 import { Button } from '@/components/ui/button';
-
 import getHuntBySlug from '@/lib/api/queries/hunts/getHuntBySlug';
+import getSubmissionsByHuntId from '@/lib/api/queries/submissions/getSubmissionsByHuntId';
 import { Pencil } from 'lucide-react';
-
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-const HuntDetails = async ({ params }: { params: Promise<{ slug: string }> }) => {
+import { Suspense } from 'react';
+
+async function HuntDetailsContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
   const hunt = await getHuntBySlug(slug);
 
   if ('error' in hunt) {
-    console.log(hunt.error);
     notFound();
   }
   const { items } = hunt;
+  const pendingSubmissions = await getSubmissionsByHuntId(hunt.id, 'pending');
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -38,15 +40,15 @@ const HuntDetails = async ({ params }: { params: Promise<{ slug: string }> }) =>
               ? 'Completed'
               : 'Draft'}
         </p>
-        <div>
-          <Button className="mt-4">
+        <div className="flex flex-wrap gap-2 mt-4">
+          <Button asChild>
             <Link href={`/admin/hunts/${hunt.slug}/edit`}>Edit Hunt</Link>
           </Button>
         </div>
       </div>
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 p-4 grid gap-2 border-1 border-accent rounded-lg">
         <h2 className="mt-6 mb-2 text-xl font-semibold">Hunt Items</h2>
-        <div className="grid grid-cols-1 gap-4 rounded-lg bg-gray-100 p-4 md:grid-cols-[auto_1fr]">
+        <div className="grid grid-cols-1 gap-4 rounded-lg bg-card p-4 md:grid-cols-[auto_1fr] border-accent border-2">
           <div>
             {items.length > 0 ? (
               <ul className="list-disc">
@@ -78,10 +80,39 @@ const HuntDetails = async ({ params }: { params: Promise<{ slug: string }> }) =>
           <HuntMap items={items} className="flex h-full min-h-96 w-full flex-col" />
         </div>
       </div>
-      <ParticipantsByHuntSlug huntId={hunt.id} />
       <Scoreboard huntId={hunt.id} />
+      <div className="flex flex-col gap-2 lg:col-span-2 p-4 border-1 border-accent rounded-lg">
+        <h2 className="text-lg font-semibold">Pending submissions</h2>
+        {pendingSubmissions.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No pending submissions.</p>
+        ) : (
+          <SubmissionsTable
+            submissions={pendingSubmissions}
+            slug={slug}
+            showApprovalActions
+          />
+        )}
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" asChild>
+            <Link href={`/admin/hunts/${hunt.slug}/submissions/summary`}>
+              Submissions summary
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/admin/hunts/${hunt.slug}/submissions`}>
+              View submissions
+            </Link>
+          </Button>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
-export default HuntDetails;
+export default function HuntDetails({ params }: { params: Promise<{ slug: string }> }) {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <HuntDetailsContent params={params} />
+    </Suspense>
+  );
+}

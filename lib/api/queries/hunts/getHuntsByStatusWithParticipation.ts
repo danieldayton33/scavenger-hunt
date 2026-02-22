@@ -1,7 +1,7 @@
 import { db } from '@/db';
 import { scavengerHunts, huntParticipants } from '@/db/schema';
 import { HuntStatus, ScavengerHunt } from '@/lib/schemas/hunt';
-import { desc, eq, getTableColumns, and, exists, sql } from 'drizzle-orm';
+import { desc, eq, getTableColumns, and, exists, sql, inArray } from 'drizzle-orm';
 
 export type HuntWithParticipation = ScavengerHunt & {
   userIsParticipant: boolean;
@@ -9,10 +9,10 @@ export type HuntWithParticipation = ScavengerHunt & {
 
 export async function getHuntsByStatusWithParticipation({
   userId,
-  status = 'published',
+  statuses = ['published'],
 }: {
   userId?: string;
-  status?: HuntStatus;
+  statuses?: HuntStatus[];
 }): Promise<HuntWithParticipation[]> {
   console.log('userId', userId);
   const rows = await db
@@ -33,7 +33,7 @@ export async function getHuntsByStatusWithParticipation({
         : sql<boolean>`false`,
     })
     .from(scavengerHunts)
-    .where(eq(scavengerHunts.status, status))
+    .where(inArray(scavengerHunts.status, statuses))
     .orderBy(desc(scavengerHunts.createdAt));
 
   return rows as HuntWithParticipation[];

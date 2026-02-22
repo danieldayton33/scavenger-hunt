@@ -1,0 +1,1 @@
+ALTER TABLE "scavenger_hunts" ADD COLUMN "imageUrl" varchar(1024);

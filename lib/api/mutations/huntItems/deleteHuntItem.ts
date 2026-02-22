@@ -25,7 +25,7 @@ const deleteHuntItem = async (
 
     await db.delete(huntItems).where(eq(huntItems.id, huntItemId));
 
-    revalidateTag(`hunt-${existingHuntItem.huntId}`);
+    revalidateTag(`hunt-${existingHuntItem.huntId}`, 'max');
     return huntItemId;
   } catch (error) {
     console.error('Error deleting hunt item', error);
