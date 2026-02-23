@@ -45,6 +45,23 @@ async function CreateSubmissionContent({
     notFound();
   }
 
+  // If hunt is completed, submissions are closed
+  if (hunt.status === 'completed') {
+    return (
+      <div className="container mx-auto max-w-2xl">
+        <h1 className="mb-6 text-3xl font-bold">Submissions Closed</h1>
+        <div className="rounded-lg border p-6">
+          <p className="mb-4 text-gray-600">
+            This hunt has ended and is now part of our past hunts. New submissions are closed.
+          </p>
+          <Button variant="outline" asChild>
+            <Link href={`/scavenger-hunt/${slug}`}>Back to Hunt</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Check if user is a participant
   const userIsParticipant = await isUserParticipant(hunt.id);
   if (!userIsParticipant) {
@@ -56,7 +73,9 @@ async function CreateSubmissionContent({
             You need to join this hunt before you can create a submission.
           </p>
           <div className="flex gap-2">
-            <JoinHuntButton huntId={hunt.id} huntSlug={slug} />
+            {hunt.status !== 'completed' && (
+              <JoinHuntButton huntId={hunt.id} huntSlug={slug} />
+            )}
             <Button variant="outline" asChild>
               <Link href={`/scavenger-hunt/${slug}`}>Back to Hunt</Link>
             </Button>

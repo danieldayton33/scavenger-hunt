@@ -57,7 +57,7 @@ async function HuntViewContent({ params }: { params: Promise<{ slug: string }> }
         {huntWithItems.description && (
           <p className="mt-2 text-gray-600">{huntWithItems.description}</p>
         )}
-        {session?.user && !userIsParticipant && (
+        {session?.user && !userIsParticipant && huntWithItems.status !== 'completed' && (
           <JoinHuntButton huntId={huntWithItems.id} huntSlug={slug} />
         )}
         <Countdown endAt={huntWithItems.endAt} />
