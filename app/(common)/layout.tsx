@@ -8,6 +8,13 @@ import {
   NavigationMenuLink,
 } from '@/components/ui/navigation-menu';
 import UserMenuOrSignIn from '@/components/UserMenuOrSignIn';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { MobileMenu } from '@/components/MobileMenu';
+
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/archive', label: 'Past Hunts' },
+] as const;
 
 const CommonLayout = async ({ children }: { children: ReactNode }) => {
   return (
@@ -23,33 +30,43 @@ const CommonLayout = async ({ children }: { children: ReactNode }) => {
                 height={36}
                 priority
               />
-              <span className="text-xl font-bold">FRoG Scavenger Hunt</span>
+              <span className="hidden text-xl font-bold md:inline">FRoG Scavenger Hunt</span>
             </Link>
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/archive"
-                      className="hover:bg-accent hover:text-accent-foreground rounded-md px-4 py-2 text-sm font-medium transition-colors"
-                    >
-                      Past Hunts
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <div className="hidden md:block">
+              <NavigationMenu>
+                <NavigationMenuList>
+                  {navLinks.map((link) => (
+                    <NavigationMenuItem key={link.href}>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          href={link.href}
+                          className="hover:bg-accent hover:text-accent-foreground rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                        >
+                          {link.label}
+                        </Link>
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                  ))}
+                </NavigationMenuList>
+              </NavigationMenu>
+            </div>
           </div>
-          <Suspense fallback={<div>Loading...</div>}>
-            <UserMenuOrSignIn />
-          </Suspense>
+          <div className="flex items-center gap-2">
+            <ThemeSwitcher />
+            <Suspense fallback={<div>Loading...</div>}>
+              <UserMenuOrSignIn />
+            </Suspense>
+            <div className="md:hidden">
+              <MobileMenu />
+            </div>
+          </div>
         </div>
       </nav>
       <main className="flex-1 p-8">{children}</main>
       <footer className="shrink-0 border-t bg-background">
         <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-4 py-4 text-sm text-muted-foreground md:flex-row">
           <p>&copy; Friends of the Raleigh Greenway</p>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-col items-center gap-2 md:flex-row md:gap-4">
             <Link
               href="https://friendsoftheraleighgreenway.org"
               target="_blank"

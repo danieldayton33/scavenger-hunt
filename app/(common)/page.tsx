@@ -61,7 +61,7 @@ async function HomeContent() {
       </section>
 
       {/* Upcoming hunts */}
-      <section className="space-y-4">
+      <section id="upcoming-hunts" className="space-y-4">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="text-2xl font-bold">Upcoming Hunts</h2>
           {hunts.length > 0 && (

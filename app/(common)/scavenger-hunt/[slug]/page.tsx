@@ -55,16 +55,18 @@ async function HuntViewContent({ params }: { params: Promise<{ slug: string }> }
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold">{huntWithItems.title}</h1>
         {huntWithItems.description && (
-          <p className="mt-2 text-gray-600">{huntWithItems.description}</p>
+          <p className="mt-2 text-muted-foreground">{huntWithItems.description}</p>
         )}
         {session?.user && !userIsParticipant && huntWithItems.status !== 'completed' && (
           <JoinHuntButton huntId={huntWithItems.id} huntSlug={slug} />
         )}
         <Countdown endAt={huntWithItems.endAt} />
-        <p className="mt-2 font-bold text-gray-600">Left to find: {leftToFind}</p>
-        <Scoreboard huntId={huntWithItems.id} />
+        <p className="mt-2 font-bold text-muted-foreground">Left to find: {leftToFind}</p>
+        <div className="hidden md:block">
+          <Scoreboard huntId={huntWithItems.id} />
+        </div>
       </div>
-      <div className="lg:col-span-2 xl:col-span-3">
+      <div className="min-h-[400px] lg:col-span-2 xl:col-span-3">
         <HuntMap
           items={itemsWithSubmissionStatus}
           isParticipantView={true}
