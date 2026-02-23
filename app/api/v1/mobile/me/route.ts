@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/db';
+import { users } from '@/db/schema';
 import { getMobileUserFromRequest } from '@/lib/mobileAuth';
 import { mobileApi, jsonSuccess } from '@/lib/apiResponse';
 import { mobileUserSchema } from '@/lib/schemas/mobileApi';
+import { eq } from 'drizzle-orm';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const result = await getMobileUserFromRequest(request);
-  if (!result) {
-    return mobileApi.unauthorized();
-  }
-  if ('error' in result && result.error === 'EMAIL_EXISTS') {
-    return mobileApi.conflict('This email is already registered. Please sign in.');
-  }
-  if (!('user' in result)) {
+  if (!result || !('user' in result)) {
+    if (result && 'error' in result && result.error === 'EMAIL_EXISTS') {
+      return mobileApi.conflict('This email is already registered. Please sign in.');
+    }
     return mobileApi.unauthorized();
   }
   const { user } = result;
@@ -29,4 +29,21 @@ export async function GET(request: Request): Promise<NextResponse> {
     return mobileApi.serverError();
   }
   return jsonSuccess(validated.data);
+}
+
+export async function DELETE(request: Request): Promise<NextResponse> {
+  const result = await getMobileUserFromRequest(request);
+  if (!result || !('user' in result)) {
+    return mobileApi.unauthorized();
+  }
+
+  const { user } = result;
+
+  try {
+    await db.delete(users).where(eq(users.id, user.id));
+    return jsonSuccess({ deleted: true as const }, 200);
+  } catch (e) {
+    console.error('[DELETE /mobile/me] Failed to delete user', e);
+    return mobileApi.serverError();
+  }
 }

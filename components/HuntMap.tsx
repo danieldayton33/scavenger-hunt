@@ -66,7 +66,7 @@ export default function HuntMap({
   apiKey,
   items,
   fallbackZoom = 12,
-  className = 'h-[70vh] w-full rounded-2xl overflow-hidden shadow',
+  className = 'min-h-[400px] h-[70vh] w-full rounded-2xl overflow-hidden shadow',
   isParticipantView = false,
   huntSlug,
   isParticipant = false,
@@ -198,7 +198,7 @@ function HuntMapInner({
       }
     >
       {isParticipantView && (
-        <div className="flex-shrink-0 border-r bg-white">
+        <div className="flex-shrink-0 border-r bg-background">
           <div className="border-b p-4">
             <h3 className="text-lg font-semibold">Hunt Items</h3>
           </div>
@@ -221,7 +221,7 @@ function HuntMapInner({
                     <button
                       onClick={() => setActiveId(it.id)}
                       className={`w-full px-4 py-3 text-left transition-colors ${
-                        isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-gray-100'
+                        isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
                       }`}
                     >
                       <div className="font-medium">{it.title}</div>
@@ -237,13 +237,14 @@ function HuntMapInner({
           </div>
         </div>
       )}
-      <div className={isParticipantView ? 'flex-1 lg:col-span-2 xl:col-span-3' : 'flex-grow'}>
+      <div className={isParticipantView ? 'min-h-[400px] flex-1 lg:col-span-2 xl:col-span-3' : 'flex-grow'}>
         <Map
           mapId="de72253cc965ac28fafcffde"
-          center={initialCenter}
-          zoom={fallbackZoom}
+          defaultCenter={initialCenter}
+          defaultZoom={fallbackZoom}
           gestureHandling={isParticipantView ? 'greedy' : 'cooperative'}
           disableDefaultUI={true}
+          zoomControl={isParticipantView}
           style={{ width: '100%', height: '100%' }}
         >
           {!isParticipantView &&
@@ -323,14 +324,14 @@ function HuntCard({
   const hasSubmission = submissionStatus && submissionStatus !== 'not_submitted' && submissionId;
 
   return (
-    <div className="max-w-xs">
+    <div className="max-w-xs rounded-lg bg-background p-3">
       <div className="text-sm font-semibold">{item.title}</div>
-      <div className="mt-1 text-xs text-gray-600">{item.description}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{item.description}</div>
       <div className="mt-2 text-xs">
         <span className="font-medium">Clue:</span> {item.hint}
       </div>
       {item.createdAt && (
-        <div className="mt-2 text-[11px] text-gray-500">
+        <div className="mt-2 text-[11px] text-muted-foreground">
           Added: {new Date(item.createdAt).toLocaleString()}
         </div>
       )}

@@ -55,6 +55,23 @@ async function EditSubmissionContent({ params }: { params: Promise<{ slug: strin
     notFound();
   }
 
+  // If hunt is completed, submissions are closed
+  if (hunt.status === 'completed') {
+    return (
+      <div className="container mx-auto max-w-2xl">
+        <h1 className="mb-6 text-3xl font-bold">Submissions Closed</h1>
+        <div className="rounded-lg border p-6">
+          <p className="mb-4 text-gray-600">
+            This hunt has ended and is now part of our past hunts. Editing submissions is closed.
+          </p>
+          <Button variant="outline" asChild>
+            <Link href={`/scavenger-hunt/${slug}`}>Back to Hunt</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Check if user is a participant
   const userIsParticipant = await isUserParticipant(hunt.id);
   if (!userIsParticipant) {
