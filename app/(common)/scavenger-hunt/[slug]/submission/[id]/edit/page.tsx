@@ -83,9 +83,7 @@ async function EditSubmissionContent({ params }: { params: Promise<{ slug: strin
             You need to join this hunt before you can edit a submission.
           </p>
           <div className="flex gap-2">
-            {hunt.status !== 'completed' && (
-              <JoinHuntButton huntId={hunt.id} huntSlug={slug} />
-            )}
+            <JoinHuntButton huntId={hunt.id} huntSlug={slug} />
             <Button variant="outline" asChild>
               <Link href={`/scavenger-hunt/${slug}`}>Back to Hunt</Link>
             </Button>

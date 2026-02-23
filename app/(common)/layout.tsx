@@ -48,7 +48,7 @@ const CommonLayout = async ({ children }: { children: ReactNode }) => {
       <main className="flex-1 p-8">{children}</main>
       <footer className="shrink-0 border-t bg-background">
         <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-4 py-4 text-sm text-muted-foreground md:flex-row">
-          <p>&copy; {new Date().getFullYear()} Friends of the Raleigh Greenway</p>
+          <p>&copy; Friends of the Raleigh Greenway</p>
           <div className="flex flex-wrap items-center gap-4">
             <Link
               href="https://friendsoftheraleighgreenway.org"
