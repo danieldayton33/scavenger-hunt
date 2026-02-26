@@ -27,6 +27,7 @@ import { useRouter } from 'next/navigation';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { LocationPicker } from './LocationPicker';
+import { SubmissionImageUpload } from './SubmissionImageUpload';
 
 const SubmissionForm = ({
   hunt,
@@ -99,16 +100,23 @@ const SubmissionForm = ({
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>Image</FormLabel>
               <FormControl>
-                <Input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  {...field}
-                  value={field.value || ''}
-                />
+                <div className="space-y-2">
+                  <SubmissionImageUpload
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    huntId={hunt.id}
+                  />
+                  <Input
+                    type="url"
+                    placeholder="Or paste image URL"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </div>
               </FormControl>
-              <FormDescription>URL to an image of your submission (optional)</FormDescription>
+              <FormDescription>Upload an image or paste a URL (optional)</FormDescription>
               <FormMessage />
             </FormItem>
           )}

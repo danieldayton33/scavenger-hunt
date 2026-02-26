@@ -55,7 +55,7 @@ export async function getMobileUserFromRequest(
     return {
       user: {
         id: existing.id,
-        role: existing.role as 'admin' | 'user',
+        role: existing.role,
         firebaseUid: existing.firebaseUid,
         email: existing.email,
         name: existing.name,
