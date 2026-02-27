@@ -1,6 +1,6 @@
 'use client';
 
-import { signInWithCredentials, signInWithGoogle, signInWithPostmark } from '@/lib/actions/auth';
+import { signInWithGoogle, signInWithPostmark } from '@/lib/actions/auth';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
@@ -11,89 +11,62 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Separator } from './ui/separator';
-import { redirect, useRouter } from 'next/navigation';
 
-const signInSchema = z.object({
+const emailSchema = z.object({
   email: z.string().email('Invalid email address'),
 });
 
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  // keep name optional, but allow empty string from the input
   name: z.string().min(1, 'Name is required').optional(),
 });
 
-type SignInFormData = z.infer<typeof signInSchema>;
+type EmailFormData = z.infer<typeof emailSchema>;
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  const signInForm = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: {
-      email: '',
-    },
+  const signInForm = useForm<EmailFormData>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { email: '' },
   });
 
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-      name: '',
-    },
+    defaultValues: { email: '', name: '' },
   });
 
-  const onSignUp = async (data: SignUpFormData) => {
+  const sendMagicLink = async (email: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(result.error || 'Failed to create account');
-        return;
-      }
-
-      toast.success('Account created successfully! Please sign in.');
-      // Switch to sign in tab and pre-fill email
-      signInForm.setValue('email', data.email);
-      // Note: Tabs component doesn't have a controlled value prop in this version,
-      // so we'll just show a success message and let user manually switch
+      await signInWithPostmark(email);
+      toast.success('Check your email for a sign-in link.');
     } catch {
-      toast.error('An error occurred during sign up');
+      toast.error('An error occurred sending the magic link');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onPostmarkSignIn = async (data: EmailFormData) => {
+    await sendMagicLink(data.email);
+  };
+
+  const onSignUp = async (data: SignUpFormData) => {
+    // With magic link, "sign up" is the same as "sign in" — NextAuth will create the user on first verify.
+    // If you want to persist name, do it after first login (onboarding) or via an event/createUser hook.
+    await sendMagicLink(data.email);
   };
 
   const onGoogleSignIn = async () => {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      // Redirect happens in the server action
+      // redirect happens in the server action
     } catch {
       toast.error('An error occurred during Google sign in');
-      setIsLoading(false);
-    }
-  };
-
-  const onPostmarkSignIn = async (data: SignInFormData) => {
-    console.log('data', data);
-    setIsLoading(true);
-    try {
-      await signInWithPostmark(data.email);
-    } catch {
-      toast.error('An error occurred during Postmark sign in');
       setIsLoading(false);
     }
   };
@@ -102,8 +75,8 @@ const SignIn = () => {
     <div className="w-full space-y-4">
       <Tabs defaultValue="signin" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="signin">Sign In</TabsTrigger>
-          <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <TabsTrigger value="signin">Email Link</TabsTrigger>
+          <TabsTrigger value="signup">New Account</TabsTrigger>
         </TabsList>
 
         <TabsContent value="signin" className="space-y-4">
@@ -122,8 +95,9 @@ const SignIn = () => {
                   </FormItem>
                 )}
               />
+
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? 'Sending link...' : 'Send sign-in link'}
               </Button>
             </form>
           </Form>
@@ -145,6 +119,7 @@ const SignIn = () => {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={signUpForm.control}
                 name="email"
@@ -160,10 +135,14 @@ const SignIn = () => {
               />
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating account...' : 'Sign Up'}
+                {isLoading ? 'Sending link...' : 'Create account via email link'}
               </Button>
             </form>
           </Form>
+
+          <p className="text-muted-foreground text-sm">
+            We’ll email you a link to finish creating your account.
+          </p>
         </TabsContent>
       </Tabs>
 
