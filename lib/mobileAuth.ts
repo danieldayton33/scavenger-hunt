@@ -4,8 +4,12 @@
  */
 import { db } from '@/db';
 import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { getFirebaseAdmin, verifyFirebaseIdToken } from './firebaseAdmin';
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
 
 export type AuthedMobileUser = {
   id: string;
@@ -41,7 +45,7 @@ export async function getMobileUserFromRequest(
   }
 
   const firebaseUid = decoded.uid;
-  const email = decoded.email ?? `firebase_${firebaseUid}@placeholder.local`;
+  const normalizedEmail = decoded.email ? normalizeEmail(decoded.email) : `firebase_${firebaseUid}@placeholder.local`;
   let name = decoded.name ?? null;
   let image = decoded.picture ?? null;
 
@@ -65,10 +69,10 @@ export async function getMobileUserFromRequest(
     };
   }
 
-  // If an email-based account exists, require explicit linking flow.
+  // If an email-based account exists, require explicit linking flow. Use case-insensitive email match.
   if (decoded.email) {
     const existingByEmail = await db.query.users.findFirst({
-      where: eq(users.email, decoded.email),
+      where: sql`lower(${users.email}) = ${normalizedEmail}`,
       columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true },
     });
 
@@ -93,13 +97,13 @@ export async function getMobileUserFromRequest(
     }
   }
 
-  // Get-or-create: insert then select (idempotent via unique on firebaseUid)
+  // Get-or-create: insert then select (idempotent via unique on firebaseUid). Store normalized email.
   try {
     const [inserted] = await db
       .insert(users)
       .values({
         firebaseUid,
-        email,
+        email: normalizedEmail,
         name,
         image,
         role: 'user',

@@ -38,18 +38,100 @@ export async function POST(request: Request): Promise<NextResponse> {
   const normalizedSessionEmail = normalizeEmail(sessionEmail);
 
   if ('code' in parsed.data) {
-    const codeRow = await db.query.firebaseLinkCodes.findFirst({
-      where: and(eq(firebaseLinkCodes.code, parsed.data.code), gt(firebaseLinkCodes.expiresAt, new Date())),
-      columns: { code: true, firebaseUid: true, email: true },
-    });
-    if (!codeRow) {
-      return mobileApi.forbidden('Link code is invalid or expired');
+    const linkCode = parsed.data.code;
+    type TxResult = { ok: true; alreadyLinked: boolean; firebaseUid: string };
+    type TxError = { code: string };
+    try {
+      const result = await db.transaction(async (tx): Promise<TxResult> => {
+        const claimed = await tx
+          .delete(firebaseLinkCodes)
+          .where(
+            and(
+              eq(firebaseLinkCodes.code, linkCode),
+              gt(firebaseLinkCodes.expiresAt, new Date()),
+              eq(firebaseLinkCodes.email, normalizedSessionEmail)
+            )
+          )
+          .returning({ firebaseUid: firebaseLinkCodes.firebaseUid });
+
+        if (claimed.length === 0) {
+          const existingCode = await tx.query.firebaseLinkCodes.findFirst({
+            where: and(
+              eq(firebaseLinkCodes.code, linkCode),
+              gt(firebaseLinkCodes.expiresAt, new Date())
+            ),
+            columns: { email: true },
+          });
+          if (existingCode && normalizeEmail(existingCode.email) !== normalizedSessionEmail) {
+            throw { code: 'EMAIL_MISMATCH' } satisfies TxError;
+          }
+          throw { code: 'INVALID_OR_EXPIRED' } satisfies TxError;
+        }
+
+        const claimedFirebaseUid = claimed[0].firebaseUid;
+
+        const user = await tx.query.users.findFirst({
+          where: eq(users.id, sessionUserId),
+          columns: { id: true, email: true, firebaseUid: true },
+        });
+        if (!user) throw { code: 'UNAUTHORIZED' } satisfies TxError;
+        if (normalizeEmail(user.email) !== normalizedSessionEmail) throw { code: 'SESSION_EMAIL_MISMATCH' } satisfies TxError;
+
+        if (user.firebaseUid) {
+          if (user.firebaseUid === claimedFirebaseUid) {
+            return { ok: true, alreadyLinked: true, firebaseUid: user.firebaseUid };
+          }
+          throw { code: 'ALREADY_LINKED_DIFFERENT' } satisfies TxError;
+        }
+
+        const existing = await tx.query.users.findFirst({
+          where: and(eq(users.firebaseUid, claimedFirebaseUid), ne(users.id, user.id)),
+          columns: { id: true },
+        });
+        if (existing) throw { code: 'FIREBASE_ALREADY_LINKED' } satisfies TxError;
+
+        const [updated] = await tx
+          .update(users)
+          .set({ firebaseUid: claimedFirebaseUid, updatedAt: new Date() })
+          .where(eq(users.id, user.id))
+          .returning({ firebaseUid: users.firebaseUid });
+        if (!updated?.firebaseUid) throw { code: 'UPDATE_FAILED' } satisfies TxError;
+        return { ok: true, alreadyLinked: false, firebaseUid: updated.firebaseUid };
+      });
+
+      const payload = {
+        linked: true as const,
+        alreadyLinked: result.alreadyLinked,
+        firebaseUid: result.firebaseUid,
+      };
+      const validated = linkFirebaseResponseSchema.safeParse(payload);
+      if (!validated.success) {
+        console.error('[POST /mobile/link-firebase] Response shape invalid:', validated.error.flatten());
+        return mobileApi.serverError();
+      }
+      return jsonSuccess(validated.data);
+    } catch (err) {
+      const e = err as TxError;
+      if (e?.code === 'EMAIL_MISMATCH') {
+        return mobileApi.forbidden('Signed-in account email does not match the account that requested the link');
+      }
+      if (e?.code === 'INVALID_OR_EXPIRED') {
+        return mobileApi.forbidden('Link code is invalid or expired');
+      }
+      if (e?.code === 'UNAUTHORIZED' || e?.code === 'SESSION_EMAIL_MISMATCH') {
+        return mobileApi.forbidden('Session email does not match user record');
+      }
+      if (e?.code === 'ALREADY_LINKED_DIFFERENT') {
+        return mobileApi.conflict('Account is already linked to a different Firebase user');
+      }
+      if (e?.code === 'FIREBASE_ALREADY_LINKED') {
+        return mobileApi.conflict('This Firebase user is already linked to another account');
+      }
+      if (e?.code === 'UPDATE_FAILED') {
+        return mobileApi.serverError('Unable to link Firebase account');
+      }
+      throw err;
     }
-    if (normalizeEmail(codeRow.email) !== normalizedSessionEmail) {
-      return mobileApi.forbidden('Signed-in account email does not match the account that requested the link');
-    }
-    firebaseUid = codeRow.firebaseUid;
-    await db.delete(firebaseLinkCodes).where(eq(firebaseLinkCodes.code, codeRow.code));
   } else {
     let decoded: Awaited<ReturnType<typeof verifyFirebaseIdToken>>;
     try {

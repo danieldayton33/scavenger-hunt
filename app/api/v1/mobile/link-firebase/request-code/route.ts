@@ -1,4 +1,6 @@
+import { randomBytes } from 'crypto';
 import { NextResponse } from 'next/server';
+import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { firebaseLinkCodes } from '@/db/schema';
 import { mobileApi, jsonSuccess } from '@/lib/apiResponse';
@@ -9,15 +11,8 @@ const CODE_EXPIRES_IN_SECONDS = 600; // 10 minutes
 const CODE_LENGTH = 32;
 
 function generateSecureCode(): string {
-  const bytes = new Uint8Array(CODE_LENGTH);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(bytes);
-  } else {
-    for (let i = 0; i < CODE_LENGTH; i++) {
-      bytes[i] = Math.floor(Math.random() * 256);
-    }
-  }
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  const bytes = randomBytes(CODE_LENGTH);
+  return bytes.toString('hex');
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -48,6 +43,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const expiresAt = new Date(Date.now() + CODE_EXPIRES_IN_SECONDS * 1000);
 
   try {
+    await db.delete(firebaseLinkCodes).where(eq(firebaseLinkCodes.firebaseUid, firebaseUid));
     await db.insert(firebaseLinkCodes).values({
       code,
       firebaseUid,
