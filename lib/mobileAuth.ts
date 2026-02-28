@@ -21,7 +21,7 @@ export type MobileAuthResult = {
   decodedToken: { uid: string; email?: string; name?: string; picture?: string };
 };
 
-export type MobileAuthError = { error: 'EMAIL_EXISTS' };
+export type MobileAuthError = { error: 'EMAIL_EXISTS' | 'LINK_REQUIRED' };
 
 export async function getMobileUserFromRequest(
   request: Request
@@ -63,6 +63,23 @@ export async function getMobileUserFromRequest(
       },
       decodedToken: { uid: decoded.uid, email: decoded.email, name: decoded.name, picture: decoded.picture },
     };
+  }
+
+  // If an email-based account exists, require explicit linking flow.
+  if (decoded.email) {
+    const existingByEmail = await db.query.users.findFirst({
+      where: eq(users.email, decoded.email),
+      columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true },
+    });
+
+    if (existingByEmail) {
+      if (existingByEmail.firebaseUid && existingByEmail.firebaseUid !== firebaseUid) {
+        return { error: 'EMAIL_EXISTS' };
+      }
+      if (!existingByEmail.firebaseUid) {
+        return { error: 'LINK_REQUIRED' };
+      }
+    }
   }
 
   // New user: if token didn't provide name/image, fetch from Firebase Auth (avoids race after updateDisplayName)
@@ -127,8 +144,8 @@ export async function getMobileUserFromRequest(
     const err = raw as { code?: string; constraint?: string; detail?: string };
     // Postgres unique violation (23505); real error may be on .cause
     if (err?.code === '23505') {
-      if (err?.constraint === 'users_email_unique') return { error: 'EMAIL_EXISTS' };
-      if (typeof err?.detail === 'string' && err.detail.includes('(email)=')) return { error: 'EMAIL_EXISTS' };
+      if (err?.constraint === 'users_email_unique') return { error: 'LINK_REQUIRED' };
+      if (typeof err?.detail === 'string' && err.detail.includes('(email)=')) return { error: 'LINK_REQUIRED' };
     }
     console.error('mobileAuth getOrCreate error:', e);
   }

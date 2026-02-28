@@ -227,6 +227,18 @@ export const userDevices = pgTable(
   ]
 );
 
+// --- Firebase link codes (one-time codes for account linking) ---
+export const firebaseLinkCodes = pgTable(
+  'firebase_link_codes',
+  {
+    code: varchar('code', { length: 64 }).primaryKey(),
+    firebaseUid: varchar('firebaseUid', { length: 255 }).notNull(),
+    email: varchar('email', { length: 255 }).notNull(),
+    expiresAt: timestamp('expiresAt', { withTimezone: true }).notNull(),
+  },
+  (t) => [index('firebase_link_codes_expires_at_idx').on(t.expiresAt)]
+);
+
 // --- Relations (so with: { ... } works) ---
 export const usersRelations = relations(users, ({ many }) => ({
   hunts: many(scavengerHunts),

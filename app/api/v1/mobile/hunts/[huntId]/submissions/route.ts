@@ -24,9 +24,9 @@ export async function GET(
   if (!result) {
     return mobileApi.unauthorized();
   }
- if('error' in result) {
-    return mobileApi.conflict(result.error);
- }
+  if ('error' in result) {
+    return mobileApi.authConflict(result.error);
+  }
 
   const parsed = pathParams.huntId.safeParse(await params);
   if (!parsed.success) {
