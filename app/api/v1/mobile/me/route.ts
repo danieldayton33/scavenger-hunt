@@ -8,11 +8,11 @@ import { eq } from 'drizzle-orm';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const result = await getMobileUserFromRequest(request);
-  if (!result || !('user' in result)) {
-    if (result && 'error' in result && result.error === 'EMAIL_EXISTS') {
-      return mobileApi.conflict('This email is already registered. Please sign in.');
-    }
+  if (!result) {
     return mobileApi.unauthorized();
+  }
+  if ('error' in result) {
+    return mobileApi.authConflict(result.error);
   }
   const { user } = result;
   const payload = {
@@ -33,8 +33,11 @@ export async function GET(request: Request): Promise<NextResponse> {
 
 export async function DELETE(request: Request): Promise<NextResponse> {
   const result = await getMobileUserFromRequest(request);
-  if (!result || !('user' in result)) {
+  if (!result) {
     return mobileApi.unauthorized();
+  }
+  if ('error' in result) {
+    return mobileApi.authConflict(result.error);
   }
 
   const { user } = result;

@@ -25,7 +25,7 @@ const signUpSchema = z.object({
 type EmailFormData = z.infer<typeof emailSchema>;
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
-const SignIn = () => {
+const SignIn = ({ redirectTo }: { redirectTo?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const signInForm = useForm<EmailFormData>({
@@ -41,7 +41,7 @@ const SignIn = () => {
   const sendMagicLink = async (email: string) => {
     setIsLoading(true);
     try {
-      await signInWithPostmark(email);
+      await signInWithPostmark(email, redirectTo ?? '/');
       toast.success('Check your email for a sign-in link.');
     } catch {
       toast.error('An error occurred sending the magic link');
@@ -63,7 +63,7 @@ const SignIn = () => {
   const onGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(redirectTo ?? '/');
       // redirect happens in the server action
     } catch {
       toast.error('An error occurred during Google sign in');

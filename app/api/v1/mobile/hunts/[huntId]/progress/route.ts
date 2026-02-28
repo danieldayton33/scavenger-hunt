@@ -12,8 +12,11 @@ export async function GET(
   { params }: { params: Promise<{ huntId: string }> }
 ): Promise<NextResponse> {
   const result = await getMobileUserFromRequest(request);
-  if (!result || 'error' in result) {
+  if (!result) {
     return mobileApi.unauthorized();
+  }
+  if ('error' in result) {
+    return mobileApi.authConflict(result.error);
   }
 
   const parsed = pathParams.huntId.safeParse(await params);

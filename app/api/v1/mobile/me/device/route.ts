@@ -7,11 +7,11 @@ import { userDevices } from '@/db/schema';
 
 export async function POST(request: Request): Promise<NextResponse> {
   const result = await getMobileUserFromRequest(request);
-  if (!result || !('user' in result)) {
+  if (!result) {
     return mobileApi.unauthorized();
   }
   if ('error' in result) {
-    return mobileApi.unauthorized();
+    return mobileApi.authConflict(result.error);
   }
 
   let body: unknown;

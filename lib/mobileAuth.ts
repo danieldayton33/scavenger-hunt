@@ -4,8 +4,12 @@
  */
 import { db } from '@/db';
 import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { getFirebaseAdmin, verifyFirebaseIdToken } from './firebaseAdmin';
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
 
 export type AuthedMobileUser = {
   id: string;
@@ -21,7 +25,7 @@ export type MobileAuthResult = {
   decodedToken: { uid: string; email?: string; name?: string; picture?: string };
 };
 
-export type MobileAuthError = { error: 'EMAIL_EXISTS' };
+export type MobileAuthError = { error: 'EMAIL_EXISTS' | 'LINK_REQUIRED' };
 
 export async function getMobileUserFromRequest(
   request: Request
@@ -41,7 +45,7 @@ export async function getMobileUserFromRequest(
   }
 
   const firebaseUid = decoded.uid;
-  const email = decoded.email ?? `firebase_${firebaseUid}@placeholder.local`;
+  const normalizedEmail = decoded.email ? normalizeEmail(decoded.email) : `firebase_${firebaseUid}@placeholder.local`;
   let name = decoded.name ?? null;
   let image = decoded.picture ?? null;
 
@@ -65,6 +69,23 @@ export async function getMobileUserFromRequest(
     };
   }
 
+  // If an email-based account exists, require explicit linking flow. Use case-insensitive email match.
+  if (decoded.email) {
+    const existingByEmail = await db.query.users.findFirst({
+      where: sql`lower(${users.email}) = ${normalizedEmail}`,
+      columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true },
+    });
+
+    if (existingByEmail) {
+      if (existingByEmail.firebaseUid && existingByEmail.firebaseUid !== firebaseUid) {
+        return { error: 'EMAIL_EXISTS' };
+      }
+      if (!existingByEmail.firebaseUid) {
+        return { error: 'LINK_REQUIRED' };
+      }
+    }
+  }
+
   // New user: if token didn't provide name/image, fetch from Firebase Auth (avoids race after updateDisplayName)
   if (!name?.trim() || !image) {
     try {
@@ -76,13 +97,13 @@ export async function getMobileUserFromRequest(
     }
   }
 
-  // Get-or-create: insert then select (idempotent via unique on firebaseUid)
+  // Get-or-create: insert then select (idempotent via unique on firebaseUid). Store normalized email.
   try {
     const [inserted] = await db
       .insert(users)
       .values({
         firebaseUid,
-        email,
+        email: normalizedEmail,
         name,
         image,
         role: 'user',
@@ -127,8 +148,8 @@ export async function getMobileUserFromRequest(
     const err = raw as { code?: string; constraint?: string; detail?: string };
     // Postgres unique violation (23505); real error may be on .cause
     if (err?.code === '23505') {
-      if (err?.constraint === 'users_email_unique') return { error: 'EMAIL_EXISTS' };
-      if (typeof err?.detail === 'string' && err.detail.includes('(email)=')) return { error: 'EMAIL_EXISTS' };
+      if (err?.constraint === 'users_email_unique') return { error: 'LINK_REQUIRED' };
+      if (typeof err?.detail === 'string' && err.detail.includes('(email)=')) return { error: 'LINK_REQUIRED' };
     }
     console.error('mobileAuth getOrCreate error:', e);
   }

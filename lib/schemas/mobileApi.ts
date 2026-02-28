@@ -110,6 +110,19 @@ export const joinHuntResponseSchema = z.object({
   alreadyJoined: z.boolean(),
 });
 
+// --- POST /api/v1/mobile/link-firebase/request-code (response) ---
+export const requestLinkCodeResponseSchema = z.object({
+  code: z.string(),
+  expiresIn: z.number().int(),
+});
+
+// --- POST /api/v1/mobile/link-firebase (response) ---
+export const linkFirebaseResponseSchema = z.object({
+  linked: z.boolean(), // always true on success
+  alreadyLinked: z.boolean(),
+  firebaseUid: z.string(),
+});
+
 // --- POST /api/v1/mobile/.../submissions (response) ---
 export const createSubmissionResponseSchema = z.object({
   id: z.number().int(),

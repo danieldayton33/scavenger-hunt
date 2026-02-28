@@ -2,24 +2,22 @@
 
 import { signIn } from '@/auth/config';
 
-
-export async function signInWithGoogle() {
+export async function signInWithGoogle(redirectTo = '/') {
   await signIn('google', {
-    redirectTo: '/',
+    redirectTo,
   });
 }
 
-export async function signInWithPostmark(email: string) {
- 
+export async function signInWithPostmark(email: string, redirectTo = '/') {
   const isDev = process.env.NODE_ENV !== 'production';
   if (isDev) {
     return await signIn('dev-email', {
       email,
-      redirectTo: '/',
+      redirectTo,
     });
   }
   await signIn('postmark', {
     email,
-    redirectTo: '/',
+    redirectTo,
   });
 }

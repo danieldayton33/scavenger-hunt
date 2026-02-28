@@ -16,7 +16,10 @@ import {
   createSubmissionBodySchema,
   scoreboardEntrySchema,
   scoreboardResponseSchema,
+  requestLinkCodeResponseSchema,
+  linkFirebaseResponseSchema,
 } from '../lib/schemas/mobileApi';
+import { linkFirebaseBodySchema } from '../lib/validators/mobile';
 
 const FLUTTER_LIB = path.resolve(__dirname, '../../frog_hunt_mobile/lib');
 const GENERATED_DIR = path.join(FLUTTER_LIB, 'generated');
@@ -31,6 +34,9 @@ const SCHEMAS: { name: string; schema: z.ZodType }[] = [
   { name: 'CreateSubmissionBody', schema: createSubmissionBodySchema },
   { name: 'ScoreboardEntry', schema: scoreboardEntrySchema },
   { name: 'ScoreboardResponse', schema: scoreboardResponseSchema },
+  { name: 'RequestLinkCodeResponse', schema: requestLinkCodeResponseSchema },
+  { name: 'LinkFirebaseBody', schema: linkFirebaseBodySchema },
+  { name: 'LinkFirebaseResponse', schema: linkFirebaseResponseSchema },
 ];
 
 const toJSONSchema = (z as unknown as { toJSONSchema: (s: z.ZodType, o?: object) => object }).toJSONSchema;

@@ -19,7 +19,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     return mobileApi.unauthorized();
   }
   if ('error' in result) {
-    return mobileApi.conflict(result.error);
+    return mobileApi.authConflict(result.error);
   }
   const hunts = await getHuntsByStatusWithParticipation({
     userId: result.user.id,

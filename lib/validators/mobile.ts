@@ -62,3 +62,9 @@ export const registerDeviceBodySchema = z.object({
   pushToken: z.string().min(1),
 });
 export type RegisterDeviceBody = z.infer<typeof registerDeviceBodySchema>;
+
+export const linkFirebaseBodySchema = z.union([
+  z.object({ idToken: z.string().min(1) }),
+  z.object({ code: z.string().min(1) }),
+]);
+export type LinkFirebaseBody = z.infer<typeof linkFirebaseBodySchema>;
