@@ -1,9 +1,10 @@
+import { Suspense } from 'react';
 import SignIn from '@/components/SignIn';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = { searchParams: Promise<{ callbackUrl?: string }> };
 
-export default async function LoginPage({ searchParams }: Props) {
+async function LoginContent({ searchParams }: Props) {
   const params = await searchParams;
   const callbackUrl = typeof params.callbackUrl === 'string' ? params.callbackUrl : undefined;
 
@@ -19,5 +20,29 @@ export default async function LoginPage({ searchParams }: Props) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Welcome to Scavenger Hunt</CardTitle>
+          <CardDescription>Loading…</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">Loading sign-in options…</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function LoginPage(props: Props) {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent {...props} />
+    </Suspense>
   );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { auth } from '@/auth/config';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -7,7 +8,7 @@ import LinkFirebaseClient from './LinkFirebaseClient';
 
 type Props = { searchParams: Promise<{ code?: string }> };
 
-export default async function LinkFirebasePage({ searchParams }: Props) {
+async function LinkFirebaseContent({ searchParams }: Props) {
   const params = await searchParams;
   const code = typeof params.code === 'string' ? params.code.trim() : undefined;
 
@@ -43,5 +44,29 @@ export default async function LinkFirebasePage({ searchParams }: Props) {
     <div className="container mx-auto max-w-md">
       <LinkFirebaseClient code={code} />
     </div>
+  );
+}
+
+function LinkFirebaseFallback() {
+  return (
+    <div className="container mx-auto max-w-md">
+      <Card>
+        <CardHeader>
+          <CardTitle>Link your account</CardTitle>
+          <CardDescription>Loading…</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">Checking your session…</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function LinkFirebasePage(props: Props) {
+  return (
+    <Suspense fallback={<LinkFirebaseFallback />}>
+      <LinkFirebaseContent {...props} />
+    </Suspense>
   );
 }
