@@ -1,20 +1,15 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
-import { getMobileUserFromRequest } from '@/lib/mobileAuth';
+import { requireMobileAuth } from '@/lib/mobileAuth';
 import { mobileApi, jsonSuccess } from '@/lib/apiResponse';
 import { mobileUserSchema } from '@/lib/schemas/mobileApi';
 import { eq } from 'drizzle-orm';
 
 export async function GET(request: Request): Promise<NextResponse> {
-  const result = await getMobileUserFromRequest(request);
-  if (!result) {
-    return mobileApi.unauthorized();
-  }
-  if ('error' in result) {
-    return mobileApi.authConflict(result.error);
-  }
-  const { user } = result;
+  const auth = await requireMobileAuth(request);
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
   const payload = {
     id: user.id,
     role: user.role,
@@ -32,15 +27,9 @@ export async function GET(request: Request): Promise<NextResponse> {
 }
 
 export async function DELETE(request: Request): Promise<NextResponse> {
-  const result = await getMobileUserFromRequest(request);
-  if (!result) {
-    return mobileApi.unauthorized();
-  }
-  if ('error' in result) {
-    return mobileApi.authConflict(result.error);
-  }
-
-  const { user } = result;
+  const auth = await requireMobileAuth(request);
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
 
   try {
     await db.delete(users).where(eq(users.id, user.id));

@@ -14,6 +14,7 @@ export async function updateSubmission(
   if (!session?.user) {
     throw new Error('Unauthorized');
   }
+  const userId = session.user.id;
 
   const data = SubmissionFormInputSchema.parse({
     imageUrl: submissionData.imageUrl,
@@ -27,7 +28,7 @@ export async function updateSubmission(
     // Check if submission exists and belongs to the user
     const existing = await db.query.submissions.findFirst({
       where: (submissions, { and, eq }) =>
-        and(eq(submissions.id, submissionId), eq(submissions.userId, session.user.id)),
+        and(eq(submissions.id, submissionId), eq(submissions.userId, userId)),
     });
 
     if (!existing) {
@@ -48,7 +49,7 @@ export async function updateSubmission(
         lng: data.lng !== undefined ? data.lng.toString() : null,
         accuracyMeters: data.accuracyMeters !== undefined ? data.accuracyMeters.toString() : null,
       })
-      .where(and(eq(submissions.id, submissionId), eq(submissions.userId, session.user.id)))
+      .where(and(eq(submissions.id, submissionId), eq(submissions.userId, userId)))
       .returning();
 
     // Revalidate relevant cache tags

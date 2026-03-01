@@ -22,15 +22,16 @@ export async function isUserParticipant(huntId: number) {
   if (!session?.user) {
     return false;
   }
-  const uncachedParticipant = await getParticipantByHuntAndUser(huntId, session.user.id);
+  const userId = session.user.id;
+  const uncachedParticipant = await getParticipantByHuntAndUser(huntId, userId);
   console.log('uncachedParticipant', uncachedParticipant);
 
   // Cache the participant check with tags for revalidation
   const getCachedParticipant = unstable_cache(
-    () => getParticipantByHuntAndUser(huntId, session.user.id),
-    [`participant-${huntId}-${session.user.id}`],
+    () => getParticipantByHuntAndUser(huntId, userId),
+    [`participant-${huntId}-${userId}`],
     {
-      tags: ['participants', `hunt-${huntId}`, `participant-${huntId}-${session.user.id}`],
+      tags: ['participants', `hunt-${huntId}`, `participant-${huntId}-${userId}`],
       revalidate: 60, // Cache for 60 seconds
     }
   );

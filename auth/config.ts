@@ -7,10 +7,10 @@ import { accounts, sessions, users, verificationTokens } from '@/db/schema';
 
 declare module 'next-auth' {
   interface Session {
-    user: DefaultSession['user'] & {
+    user: (DefaultSession['user'] & {
       id: string;
       role: 'admin' | 'user';
-    };
+    }) | null;
   }
 }
 
@@ -54,10 +54,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         ]),
   ],
   callbacks: {
+    signIn({ user }) {
+      const dbUser = user as unknown as { isActive?: boolean };
+      if (dbUser.isActive === false) {
+        return false; // Deny new sign-ins for inactive users
+      }
+      return true;
+    },
     async session({ session, user }) {
+      const dbUser = user as unknown as { id: string; role?: 'admin' | 'user'; isActive?: boolean };
+      if (dbUser.isActive === false) {
+        // Return session with no user so app can redirect to login instead of 500
+        return { ...session, user: null };
+      }
       if (session.user) {
-        session.user.id = user.id as unknown as string;
-        session.user.role = (user as unknown as { role: 'admin' | 'user' }).role ?? 'user';
+        session.user.id = dbUser.id;
+        session.user.role = dbUser.role ?? 'user';
       }
       return session;
     },

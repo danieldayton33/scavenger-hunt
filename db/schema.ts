@@ -30,6 +30,7 @@ export const users = pgTable(
     emailVerified: timestamp('emailVerified', { withTimezone: true }),
     image: varchar('image', { length: 1024 }),
     role: roleEnum('role').notNull().default('user'),
+    isActive: boolean('isActive').notNull().default(true),
     firebaseUid: varchar('firebaseUid', { length: 255 }).unique(),
     createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),

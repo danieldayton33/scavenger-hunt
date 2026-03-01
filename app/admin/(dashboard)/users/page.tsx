@@ -31,13 +31,17 @@ async function UsersTable() {
                 <TableHead>Email</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Joined</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
+                <TableHead className="w-[140px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow
+                  key={user.id}
+                  className={user.isActive === false ? 'opacity-60' : undefined}
+                >
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>{user.name ?? '—'}</TableCell>
                   <TableCell>
@@ -45,16 +49,32 @@ async function UsersTable() {
                       {user.role}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={user.isActive ? 'secondary' : 'destructive'}
+                      className={user.isActive ? '' : 'bg-muted text-muted-foreground'}
+                    >
+                      {user.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/admin/users/${encodeURIComponent(user.id)}`}
-                      className="text-primary hover:underline text-sm font-medium"
-                    >
-                      View
-                    </Link>
+                    <span className="flex gap-3">
+                      <Link
+                        href={`/admin/users/${encodeURIComponent(user.id)}`}
+                        className="text-primary hover:underline text-sm font-medium"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        href={`/admin/users/${encodeURIComponent(user.id)}/edit`}
+                        className="text-primary hover:underline text-sm font-medium"
+                      >
+                        Edit
+                      </Link>
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}

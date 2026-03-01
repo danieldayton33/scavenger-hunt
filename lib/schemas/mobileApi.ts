@@ -147,6 +147,23 @@ export const scoreboardResponseSchema = z.array(scoreboardEntrySchema);
 export const apiSuccessSchema = <T extends z.ZodType>(dataSchema: T) =>
   z.object({ ok: z.literal(true), data: dataSchema });
 
+// --- Mobile API error (4xx/5xx response body: { ok: false, error: { code, message } }) ---
+export const mobileApiErrorCodeSchema = z.enum([
+  'UNAUTHORIZED',
+  'ACCOUNT_DISABLED',
+  'LINK_REQUIRED',
+  'EMAIL_EXISTS',
+  'FORBIDDEN',
+  'VALIDATION_ERROR',
+  'NOT_FOUND',
+  'CONFLICT',
+  'INTERNAL_ERROR',
+]);
+export const mobileApiErrorSchema = z.object({
+  code: mobileApiErrorCodeSchema,
+  message: z.string(),
+});
+
 // Export types for TS
 export type MobileUser = z.infer<typeof mobileUserSchema>;
 export type HuntListItem = z.infer<typeof huntListItemSchema>;
@@ -156,3 +173,5 @@ export type Submission = z.infer<typeof submissionSchema>;
 export type Progress = z.infer<typeof progressSchema>;
 export type CreateSubmissionBody = z.infer<typeof createSubmissionBodySchema>;
 export type ScoreboardEntry = z.infer<typeof scoreboardEntrySchema>;
+export type MobileApiErrorCode = z.infer<typeof mobileApiErrorCodeSchema>;
+export type MobileApiError = z.infer<typeof mobileApiErrorSchema>;

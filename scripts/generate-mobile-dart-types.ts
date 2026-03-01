@@ -18,6 +18,7 @@ import {
   scoreboardResponseSchema,
   requestLinkCodeResponseSchema,
   linkFirebaseResponseSchema,
+  mobileApiErrorSchema,
 } from '../lib/schemas/mobileApi';
 import { linkFirebaseBodySchema } from '../lib/validators/mobile';
 
@@ -37,6 +38,7 @@ const SCHEMAS: { name: string; schema: z.ZodType }[] = [
   { name: 'RequestLinkCodeResponse', schema: requestLinkCodeResponseSchema },
   { name: 'LinkFirebaseBody', schema: linkFirebaseBodySchema },
   { name: 'LinkFirebaseResponse', schema: linkFirebaseResponseSchema },
+  { name: 'MobileApiError', schema: mobileApiErrorSchema },
 ];
 
 const toJSONSchema = (z as unknown as { toJSONSchema: (s: z.ZodType, o?: object) => object }).toJSONSchema;

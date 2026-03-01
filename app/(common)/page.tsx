@@ -10,7 +10,7 @@ async function HomeContent() {
   const session = await auth();
   const hunts = await getHuntsByStatusWithParticipation({
     statuses: ['published'],
-    userId: session?.user.id,
+    userId: session?.user?.id,
   });
 
   return (

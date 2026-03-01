@@ -14,7 +14,6 @@ export async function getHuntsByStatusWithParticipation({
   userId?: string;
   statuses?: HuntStatus[];
 }): Promise<HuntWithParticipation[]> {
-  console.log('userId', userId);
   const rows = await db
     .select({
       ...getTableColumns(scavengerHunts),

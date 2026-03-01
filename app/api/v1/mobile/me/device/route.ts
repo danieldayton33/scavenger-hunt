@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getMobileUserFromRequest } from '@/lib/mobileAuth';
+import { requireMobileAuth } from '@/lib/mobileAuth';
 import { mobileApi, jsonSuccess } from '@/lib/apiResponse';
 import { registerDeviceBodySchema } from '@/lib/validators/mobile';
 import { db } from '@/db';
 import { userDevices } from '@/db/schema';
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const result = await getMobileUserFromRequest(request);
-  if (!result) {
-    return mobileApi.unauthorized();
-  }
-  if ('error' in result) {
-    return mobileApi.authConflict(result.error);
-  }
+  const auth = await requireMobileAuth(request);
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
 
   let body: unknown;
   try {
@@ -27,7 +23,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
   const { platform, pushToken } = parsed.data;
-  const userId = result.user.id;
+  const userId = user.id;
 
   try {
     await db

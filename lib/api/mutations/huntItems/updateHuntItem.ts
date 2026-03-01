@@ -17,7 +17,7 @@ export const updatedHuntItem = async ({
   hunt: ScavengerHunt;
 }) => {
   const session = await auth();
-  if (!session || session.user.role !== 'admin') throw new Error('Forbidden');
+  if (!session || !session.user || session.user.role !== 'admin') throw new Error('Forbidden');
   const data = HuntItemSchema.parse(huntItem);
   try {
     const existingHuntItem = await db.query.huntItems.findFirst({

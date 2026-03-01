@@ -8,7 +8,7 @@ import { HuntFormData, HuntSchema } from '@/lib/schemas/hunt';
 
 export async function createHunt(newHunt: HuntFormData) {
   const session = await auth();
-  if (!session || session.user.role !== 'admin') throw new Error('Forbidden');
+  if (!session || !session.user || session.user.role !== 'admin') throw new Error('Forbidden');
 
   const data = HuntSchema.parse(newHunt);
   try {

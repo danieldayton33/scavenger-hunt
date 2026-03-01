@@ -10,7 +10,14 @@ export default async function getUsers() {
     return [];
   }
   return db.query.users.findMany({
-    columns: { id: true, email: true, name: true, role: true, createdAt: true },
+    columns: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    },
     orderBy: [desc(users.createdAt)],
   });
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
-import { getMobileUserFromRequest } from '@/lib/mobileAuth';
+import { requireMobileAuth } from '@/lib/mobileAuth';
 import { mobileApi, jsonSuccess } from '@/lib/apiResponse';
 import { pathParams } from '@/lib/validators/mobile';
 import { scoreboardEntrySchema } from '@/lib/schemas/mobileApi';
@@ -20,13 +20,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ huntId: string }> }
 ): Promise<NextResponse> {
-  const result = await getMobileUserFromRequest(request);
-  if (!result) {
-    return mobileApi.unauthorized();
-  }
-  if ('error' in result) {
-    return mobileApi.authConflict(result.error);
-  }
+  const auth = await requireMobileAuth(request);
+  if (auth instanceof NextResponse) return auth;
 
   const parsed = pathParams.huntId.safeParse(await params);
   if (!parsed.success) {
