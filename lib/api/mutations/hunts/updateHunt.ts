@@ -8,7 +8,7 @@ import { eq } from 'drizzle-orm';
 
 export async function updateHunt(updatedHunt: HuntFormData) {
   const session = await auth();
-  if (!session || session.user.role !== 'admin') throw new Error('Forbidden');
+  if (!session || !session.user || session.user.role !== 'admin') throw new Error('Forbidden');
 
   const data = HuntSchema.parse(updatedHunt);
   try {

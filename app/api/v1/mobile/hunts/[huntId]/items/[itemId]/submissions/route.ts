@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { scavengerHunts, huntItems, submissions } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
-import { getMobileUserFromRequest } from '@/lib/mobileAuth';
+import { requireMobileAuth } from '@/lib/mobileAuth';
 import { mobileApi, jsonSuccess } from '@/lib/apiResponse';
 import { pathParams, createSubmissionBodySchema } from '@/lib/validators/mobile';
 import { createSubmissionResponseSchema } from '@/lib/schemas/mobileApi';
@@ -17,13 +17,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ huntId: string; itemId: string }> }
 ): Promise<NextResponse> {
-  const result = await getMobileUserFromRequest(request);
-  if (!result) {
-    return mobileApi.unauthorized();
-  }
-  if ('error' in result) {
-    return mobileApi.authConflict(result.error);
-  }
+  const auth = await requireMobileAuth(request);
+  if (auth instanceof NextResponse) return auth;
 
   const parsedParams = pathParams.huntIdItemId.safeParse(await params);
   if (!parsedParams.success) {
@@ -67,7 +62,7 @@ export async function POST(
     where: and(
       eq(submissions.huntId, huntId),
       eq(submissions.itemId, itemId),
-      eq(submissions.userId, result.user.id)
+      eq(submissions.userId, auth.user.id)
     ),
   });
 
@@ -88,7 +83,7 @@ export async function POST(
     .values({
       huntId,
       itemId,
-      userId: result.user.id,
+      userId: auth.user.id,
       imageUrl,
       comment: data.comment ?? null,
       lat: data.lat != null ? String(data.lat) : null,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMobileUserFromRequest } from '@/lib/mobileAuth';
+import { requireMobileAuth } from '@/lib/mobileAuth';
 import { mobileApi, jsonSuccess } from '@/lib/apiResponse';
 import { getHuntsByStatusWithParticipation } from '@/lib/api/queries/hunts/getHuntsByStatusWithParticipation';
 import { huntListItemSchema } from '@/lib/schemas/mobileApi';
@@ -14,15 +14,10 @@ function toIsoString(value: unknown): string {
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
-  const result = await getMobileUserFromRequest(request);
-  if (!result) {
-    return mobileApi.unauthorized();
-  }
-  if ('error' in result) {
-    return mobileApi.authConflict(result.error);
-  }
+  const auth = await requireMobileAuth(request);
+  if (auth instanceof NextResponse) return auth;
   const hunts = await getHuntsByStatusWithParticipation({
-    userId: result.user.id,
+    userId: auth.user.id,
     statuses: ['published', 'completed'],
   });
 

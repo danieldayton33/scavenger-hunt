@@ -2,9 +2,11 @@
  * Mobile API auth: parse Bearer token, verify with Firebase Admin, map to Postgres user.
  * Returns null if missing/invalid token or user lookup fails (caller should return 401).
  */
+import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
+import { mobileApi } from './apiResponse';
 import { getFirebaseAdmin, verifyFirebaseIdToken } from './firebaseAdmin';
 
 function normalizeEmail(email: string): string {
@@ -25,7 +27,7 @@ export type MobileAuthResult = {
   decodedToken: { uid: string; email?: string; name?: string; picture?: string };
 };
 
-export type MobileAuthError = { error: 'EMAIL_EXISTS' | 'LINK_REQUIRED' };
+export type MobileAuthError = { error: 'EMAIL_EXISTS' | 'LINK_REQUIRED' | 'ACCOUNT_DISABLED' };
 
 export async function getMobileUserFromRequest(
   request: Request
@@ -52,10 +54,13 @@ export async function getMobileUserFromRequest(
   // Find existing user by firebaseUid
   const existing = await db.query.users.findFirst({
     where: eq(users.firebaseUid, firebaseUid),
-    columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true },
+    columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true, isActive: true },
   });
 
   if (existing) {
+    if (existing.isActive === false) {
+      return { error: 'ACCOUNT_DISABLED' };
+    }
     return {
       user: {
         id: existing.id,
@@ -73,10 +78,13 @@ export async function getMobileUserFromRequest(
   if (decoded.email) {
     const existingByEmail = await db.query.users.findFirst({
       where: sql`lower(${users.email}) = ${normalizedEmail}`,
-      columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true },
+      columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true, isActive: true },
     });
 
     if (existingByEmail) {
+      if (existingByEmail.isActive === false) {
+        return { error: 'ACCOUNT_DISABLED' };
+      }
       if (existingByEmail.firebaseUid && existingByEmail.firebaseUid !== firebaseUid) {
         return { error: 'EMAIL_EXISTS' };
       }
@@ -128,9 +136,12 @@ export async function getMobileUserFromRequest(
     // Conflict on firebaseUid: another request created the user; fetch
     const found = await db.query.users.findFirst({
       where: eq(users.firebaseUid, firebaseUid),
-      columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true },
+      columns: { id: true, role: true, firebaseUid: true, email: true, name: true, image: true, isActive: true },
     });
     if (found) {
+      if (found.isActive === false) {
+        return { error: 'ACCOUNT_DISABLED' };
+      }
       return {
         user: {
           id: found.id,
@@ -155,4 +166,24 @@ export async function getMobileUserFromRequest(
   }
 
   return null;
+}
+
+/**
+ * Helper for mobile API routes: resolves auth from request and returns either an error
+ * response to return to the client, or the success result.
+ *
+ * Usage: const auth = await requireMobileAuth(request);
+ *        if (auth instanceof NextResponse) return auth;
+ *        const { user } = auth;
+ */
+export async function requireMobileAuth(
+  request: Request
+): Promise<NextResponse | MobileAuthResult> {
+  const result = await getMobileUserFromRequest(request);
+  if (!result) return mobileApi.unauthorized();
+  if ('error' in result) {
+    if (result.error === 'ACCOUNT_DISABLED') return mobileApi.accountDisabled();
+    return mobileApi.authConflict(result.error);
+  }
+  return result;
 }

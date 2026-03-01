@@ -10,6 +10,7 @@ export async function createSubmission(submissionData: SubmissionFormData) {
   if (!session?.user) {
     throw new Error('Unauthorized');
   }
+  const userId = session.user.id;
 
   const data = SubmissionSchema.parse(submissionData);
 
@@ -20,7 +21,7 @@ export async function createSubmission(submissionData: SubmissionFormData) {
         and(
           eq(submissions.huntId, data.huntId),
           eq(submissions.itemId, data.itemId),
-          eq(submissions.userId, session.user.id)
+          eq(submissions.userId, userId)
         ),
     });
 
@@ -33,7 +34,7 @@ export async function createSubmission(submissionData: SubmissionFormData) {
       .values({
         huntId: data.huntId,
         itemId: data.itemId,
-        userId: session.user.id,
+        userId,
         imageUrl: data.imageUrl ?? null,
         comment: data.comment ?? null,
         lat: data.lat !== undefined ? data.lat.toString() : null,

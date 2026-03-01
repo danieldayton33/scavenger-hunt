@@ -30,6 +30,7 @@ export const mobileApi = {
     }
     return jsonError('EMAIL_EXISTS', 'This email is already linked to another Firebase account.', 409);
   },
+  accountDisabled: () => jsonError('ACCOUNT_DISABLED', 'This account has been disabled.', 403),
   conflict: (message: string, data?: { existing?: unknown }) =>
     NextResponse.json(
       { ok: false as const, error: { code: 'CONFLICT', message }, ...(data ?? {}) },

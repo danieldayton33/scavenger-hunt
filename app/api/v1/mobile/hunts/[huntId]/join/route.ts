@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { scavengerHunts, huntParticipants } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
-import { getMobileUserFromRequest } from '@/lib/mobileAuth';
+import { requireMobileAuth } from '@/lib/mobileAuth';
 import { mobileApi, jsonSuccess } from '@/lib/apiResponse';
 import { pathParams } from '@/lib/validators/mobile';
 import { joinHuntResponseSchema } from '@/lib/schemas/mobileApi';
@@ -11,13 +11,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ huntId: string }> }
 ): Promise<NextResponse> {
-  const result = await getMobileUserFromRequest(request);
-  if (!result) {
-    return mobileApi.unauthorized();
-  }
-  if ('error' in result) {
-    return mobileApi.authConflict(result.error);
-  }
+  const auth = await requireMobileAuth(request);
+  if (auth instanceof NextResponse) return auth;
 
   const parsed = pathParams.huntId.safeParse(await params);
   if (!parsed.success) {
@@ -40,7 +35,7 @@ export async function POST(
   const existing = await db.query.huntParticipants.findFirst({
     where: and(
       eq(huntParticipants.huntId, huntId),
-      eq(huntParticipants.userId, result.user.id)
+      eq(huntParticipants.userId, auth.user.id)
     ),
   });
 
@@ -56,7 +51,7 @@ export async function POST(
 
   const [inserted] = await db
     .insert(huntParticipants)
-    .values({ huntId, userId: result.user.id })
+    .values({ huntId, userId: auth.user.id })
     .returning({ id: huntParticipants.id });
 
   const payload = { id: inserted!.id, alreadyJoined: false };

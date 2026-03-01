@@ -14,7 +14,7 @@ const deleteHuntItem = async (
     }
 > => {
   const session = await auth();
-  if (!session || session.user.role !== 'admin') throw new Error('Forbidden');
+  if (!session || !session.user || session.user.role !== 'admin') throw new Error('Forbidden');
   try {
     const existingHuntItem = await db.query.huntItems.findFirst({
       where: eq(huntItems.id, huntItemId),

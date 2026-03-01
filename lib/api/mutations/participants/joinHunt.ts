@@ -9,12 +9,13 @@ export async function joinHunt(huntId: number, huntSlug?: string) {
   if (!session?.user) {
     throw new Error('Unauthorized');
   }
+  const userId = session.user.id;
 
   try {
     // Check if user is already a participant
     const existing = await db.query.huntParticipants.findFirst({
       where: (participants, { and, eq }) =>
-        and(eq(participants.huntId, huntId), eq(participants.userId, session.user.id)),
+        and(eq(participants.huntId, huntId), eq(participants.userId, userId)),
     });
 
     if (existing) {
@@ -26,14 +27,14 @@ export async function joinHunt(huntId: number, huntSlug?: string) {
       .insert(huntParticipants)
       .values({
         huntId,
-        userId: session.user.id,
+        userId,
       })
       .returning();
 
     // Revalidate relevant cache tags
     revalidateTag(`hunt-${huntId}`, 'max');
     revalidateTag('participants', 'max');
-    revalidateTag(`participant-${huntId}-${session.user.id}`, 'max');
+    revalidateTag(`participant-${huntId}-${userId}`, 'max');
 
     // Revalidate the page paths to ensure fresh data
     if (huntSlug) {
