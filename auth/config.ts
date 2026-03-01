@@ -55,9 +55,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async session({ session, user }) {
+      const dbUser = user as unknown as { id: string; role?: 'admin' | 'user'; isActive?: boolean };
+      if (dbUser.isActive === false) {
+        throw new Error('Account disabled');
+      }
       if (session.user) {
-        session.user.id = user.id as unknown as string;
-        session.user.role = (user as unknown as { role: 'admin' | 'user' }).role ?? 'user';
+        session.user.id = dbUser.id;
+        session.user.role = dbUser.role ?? 'user';
       }
       return session;
     },

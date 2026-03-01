@@ -16,7 +16,14 @@ export default async function getUserByIdWithHuntsAndSubmissions(userId: string)
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
-    columns: { id: true, email: true, name: true, role: true, createdAt: true },
+    columns: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    },
     with: {
       submissions: {
         orderBy: (s, { desc }) => [desc(s.submittedAt)],

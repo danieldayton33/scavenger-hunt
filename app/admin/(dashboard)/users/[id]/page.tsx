@@ -25,18 +25,29 @@ async function UserDetailContent({ params }: { params: Promise<{ id: string }> }
         <div>
           <h1 className="text-2xl font-bold">{user.name ?? user.email}</h1>
           <p className="text-muted-foreground">{user.email}</p>
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
               {user.role}
             </Badge>
-            <span className="ml-2 text-sm text-muted-foreground">
+            <Badge
+              variant={user.isActive ? 'secondary' : 'destructive'}
+              className={user.isActive ? '' : 'bg-muted text-muted-foreground'}
+            >
+              {user.isActive ? 'Active' : 'Inactive'}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
               Joined {new Date(user.createdAt).toLocaleDateString()}
             </span>
           </div>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/admin/users">Back to users</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link href={`/admin/users/${encodeURIComponent(userId)}/edit`}>Edit</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/admin/users">Back to users</Link>
+          </Button>
+        </div>
       </div>
 
       <section>

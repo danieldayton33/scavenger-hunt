@@ -71,6 +71,13 @@
       "when": 1772285448742,
       "tag": "0009_dear_agent_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1772365749299,
+      "tag": "0010_bright_beyonder",
+      "breakpoints": true
     }
   ]
 }
