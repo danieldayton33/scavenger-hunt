@@ -16,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -88,9 +89,11 @@ export default function AdminUserEditForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-md">
         {initialEmail != null && (
           <div className="space-y-2">
-            <FormLabel>Email</FormLabel>
+            <Label>Email</Label>
             <Input value={initialEmail} disabled className="bg-muted" />
-            <FormDescription>Email cannot be changed here.</FormDescription>
+            <p className="text-sm text-muted-foreground">
+              Email cannot be changed here.
+            </p>
           </div>
         )}
         <FormField
